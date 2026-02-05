@@ -51,7 +51,7 @@ function HomePage() {
 
           <div className="flex flex-col items-center gap-4">
             <Link 
-              to="/register"
+              to="/quiz"
               className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-lg font-bold hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 no-underline"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -220,7 +220,7 @@ function HomePage() {
               Chỉ mất 5 phút để khám phá ngành học và nghề nghiệp phù hợp với bạn
             </p>
             <Link 
-              to="/register"
+              to="/quiz"
               className="inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-600 rounded-xl text-lg font-bold hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 no-underline"
             >
               Bắt đầu ngay
