@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 // Dữ liệu câu hỏi mẫu (tạm thời)
 const mockQuestions = [
@@ -7,55 +7,106 @@ const mockQuestions = [
     id: 1,
     question: "Bạn thích làm việc theo cách nào nhất?",
     options: [
-      "Làm việc độc lập, tự quyết định",
-      "Làm việc nhóm, hợp tác với nhiều người",
-      "Kết hợp cả hai tùy tình huống",
-      "Làm việc dưới sự hướng dẫn rõ ràng"
+      { text: "Làm việc độc lập, tự quyết định", type: "analytical" },
+      { text: "Làm việc nhóm, hợp tác với nhiều người", type: "social" },
+      { text: "Kết hợp cả hai tùy tình huống", type: "creative" },
+      { text: "Làm việc dưới sự hướng dẫn rõ ràng", type: "practical" }
     ]
   },
   {
     id: 2,
     question: "Khi gặp vấn đề khó, bạn thường?",
     options: [
-      "Phân tích logic và tìm giải pháp hệ thống",
-      "Sáng tạo và thử nhiều cách khác nhau",
-      "Tìm kiếm lời khuyên từ người khác",
-      "Học hỏi từ kinh nghiệm trước đó"
+      { text: "Phân tích logic và tìm giải pháp hệ thống", type: "analytical" },
+      { text: "Sáng tạo và thử nhiều cách khác nhau", type: "creative" },
+      { text: "Tìm kiếm lời khuyên từ người khác", type: "social" },
+      { text: "Học hỏi từ kinh nghiệm trước đó", type: "practical" }
     ]
   },
   {
     id: 3,
     question: "Môn học nào bạn thấy hứng thú nhất?",
     options: [
-      "Toán học, Vật lý",
-      "Văn học, Nghệ thuật",
-      "Sinh học, Hóa học",
-      "Lịch sử, Địa lý"
+      { text: "Toán học, Vật lý", type: "analytical" },
+      { text: "Văn học, Nghệ thuật", type: "creative" },
+      { text: "Sinh học, Hóa học", type: "analytical" },
+      { text: "Lịch sử, Địa lý", type: "social" }
     ]
   },
   {
     id: 4,
     question: "Bạn thích công việc có tính chất?",
     options: [
-      "Sáng tạo và nghệ thuật",
-      "Nghiên cứu và phân tích",
-      "Tương tác với con người",
-      "Thực hành và kỹ thuật"
+      { text: "Sáng tạo và nghệ thuật", type: "creative" },
+      { text: "Nghiên cứu và phân tích", type: "analytical" },
+      { text: "Tương tác với con người", type: "social" },
+      { text: "Thực hành và kỹ thuật", type: "practical" }
     ]
   },
   {
     id: 5,
     question: "Trong thời gian rảnh, bạn thích?",
     options: [
-      "Đọc sách, tìm hiểu kiến thức mới",
-      "Hoạt động thể thao, ngoài trời",
-      "Sáng tạo nội dung, vẽ, viết",
-      "Gặp gỡ bạn bè, hoạt động xã hội"
+      { text: "Đọc sách, tìm hiểu kiến thức mới", type: "analytical" },
+      { text: "Hoạt động thể thao, ngoài trời", type: "practical" },
+      { text: "Sáng tạo nội dung, vẽ, viết", type: "creative" },
+      { text: "Gặp gỡ bạn bè, hoạt động xã hội", type: "social" }
+    ]
+  },
+  {
+    id: 6,
+    question: "Bạn cảm thấy hứng thú với điều gì nhất?",
+    options: [
+      { text: "Giải quyết các bài toán phức tạp", type: "analytical" },
+      { text: "Tạo ra những ý tưởng mới lạ", type: "creative" },
+      { text: "Giúp đỡ và làm việc với người khác", type: "social" },
+      { text: "Xây dựng và sửa chữa đồ vật", type: "practical" }
+    ]
+  },
+  {
+    id: 7,
+    question: "Khi làm dự án, bạn thường đảm nhận vai trò?",
+    options: [
+      { text: "Người lập kế hoạch và phân tích", type: "analytical" },
+      { text: "Người sáng tạo ý tưởng", type: "creative" },
+      { text: "Người kết nối và điều phối nhóm", type: "social" },
+      { text: "Người thực hiện và hoàn thiện sản phẩm", type: "practical" }
+    ]
+  },
+  {
+    id: 8,
+    question: "Bạn thích học bằng cách nào?",
+    options: [
+      { text: "Đọc sách và nghiên cứu lý thuyết", type: "analytical" },
+      { text: "Thực hành và trải nghiệm trực tiếp", type: "practical" },
+      { text: "Thảo luận nhóm và chia sẻ ý kiến", type: "social" },
+      { text: "Tự khám phá và sáng tạo", type: "creative" }
+    ]
+  },
+  {
+    id: 9,
+    question: "Môi trường làm việc lý tưởng của bạn là?",
+    options: [
+      { text: "Văn phòng yên tĩnh, tập trung cao độ", type: "analytical" },
+      { text: "Không gian sáng tạo, tự do", type: "creative" },
+      { text: "Văn phòng mở, tương tác nhiều", type: "social" },
+      { text: "Xưởng thực hành, phòng lab", type: "practical" }
+    ]
+  },
+  {
+    id: 10,
+    question: "Trong tương lai, bạn muốn làm công việc?",
+    options: [
+      { text: "Liên quan đến công nghệ và dữ liệu", type: "analytical" },
+      { text: "Liên quan đến thiết kế và nghệ thuật", type: "creative" },
+      { text: "Liên quan đến y tế và giáo dục", type: "social" },
+      { text: "Liên quan đến xây dựng và kỹ thuật", type: "practical" }
     ]
   }
 ];
 
 function QuizPage() {
+  const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
 
@@ -79,8 +130,33 @@ function QuizPage() {
   };
 
   const handleSubmit = () => {
-    // Tạm thời chỉ alert, sau này sẽ call API
-    alert('Chức năng đang được phát triển! Kết quả sẽ được hiển thị sau khi tích hợp API.');
+    // Tính toán tính cách dựa trên câu trả lời
+    const personalityScores = {
+      analytical: 0,
+      creative: 0,
+      social: 0,
+      practical: 0
+    };
+
+    Object.entries(answers).forEach(([questionId, optionIndex]) => {
+      const question = mockQuestions.find(q => q.id === parseInt(questionId));
+      if (question && question.options[optionIndex]) {
+        const type = question.options[optionIndex].type;
+        personalityScores[type]++;
+      }
+    });
+
+    // Tìm tính cách chủ đạo
+    const dominantType = Object.entries(personalityScores)
+      .reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+
+    // Navigate đến trang kết quả với dữ liệu
+    navigate('/result', { 
+      state: { 
+        personalityType: dominantType,
+        scores: personalityScores 
+      } 
+    });
   };
 
   const progress = ((currentQuestion + 1) / mockQuestions.length) * 100;
@@ -174,7 +250,7 @@ function QuizPage() {
                         ? 'text-indigo-700 font-semibold'
                         : 'text-gray-700'
                     }`}>
-                      {option}
+                      {option.text}
                     </span>
                   </div>
                 </button>
