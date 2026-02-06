@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { register } from './services/authService';
+import Toast from './components/Toast';
 
 function RegisterForm() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    fullName: '',
+    fullname: '',
     email: '',
-    phone: '',
     dateOfBirth: '',
     password: '',
     confirmPassword: ''
@@ -13,21 +15,23 @@ function RegisterForm() {
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [toast, setToast] = useState(null);
 
   // Validate từng field
   const validateField = (name, value) => {
     let error = '';
 
     switch (name) {
-      case 'fullName':
+      case 'fullname':
         if (!value.trim()) {
           error = 'Họ tên không được để trống';
         } else if (value.trim().length < 2) {
           error = 'Họ tên phải có ít nhất 2 ký tự';
-        } else if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(value)) {
-          error = 'Họ tên chỉ được chứa chữ cái';
+        } else if (value.trim().length > 255) {
+          error = 'Họ tên không được quá 255 ký tự';
         }
         break;
 
@@ -39,18 +43,9 @@ function RegisterForm() {
         }
         break;
 
-      case 'phone':
-        if (!value.trim()) {
-          error = 'Số điện thoại không được để trống';
-        } else if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(value)) {
-          error = 'Số điện thoại không hợp lệ (10 số, bắt đầu bằng 03, 05, 07, 08, 09)';
-        }
-        break;
-
       case 'dateOfBirth':
-        if (!value) {
-          error = 'Ngày sinh không được để trống';
-        } else {
+        // Optional field - chỉ validate nếu có value
+        if (value) {
           const birthDate = new Date(value);
           const today = new Date();
           let age = today.getFullYear() - birthDate.getFullYear();
@@ -73,16 +68,8 @@ function RegisterForm() {
       case 'password':
         if (!value) {
           error = 'Mật khẩu không được để trống';
-        } else if (value.length < 8) {
-          error = 'Mật khẩu phải có ít nhất 8 ký tự';
-        } else if (!/(?=.*[a-z])/.test(value)) {
-          error = 'Mật khẩu phải có ít nhất 1 chữ thường';
-        } else if (!/(?=.*[A-Z])/.test(value)) {
-          error = 'Mật khẩu phải có ít nhất 1 chữ hoa';
-        } else if (!/(?=.*\d)/.test(value)) {
-          error = 'Mật khẩu phải có ít nhất 1 chữ số';
-        } else if (!/(?=.*[@$!%*?&])/.test(value)) {
-          error = 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt (@$!%*?&)';
+        } else if (value.length < 6) {
+          error = 'Mật khẩu phải có ít nhất 6 ký tự';
         }
         break;
 
@@ -153,7 +140,7 @@ function RegisterForm() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Mark all fields as touched
@@ -169,19 +156,42 @@ function RegisterForm() {
 
     // Nếu không có lỗi thì submit
     if (Object.keys(newErrors).length === 0) {
-      console.log('Form submitted:', formData);
-      alert('Đăng ký thành công!');
-      // Reset form
-      setFormData({
-        fullName: '',
-        email: '',
-        phone: '',
-        dateOfBirth: '',
-        password: '',
-        confirmPassword: ''
-      });
-      setTouched({});
-      setErrors({});
+      setIsSubmitting(true);
+
+      try {
+        // Convert date format (YYYY-MM-DD) hoặc null
+        const dateofbirth = formData.dateOfBirth ? formData.dateOfBirth : null;
+
+        const result = await register(
+          formData.email,
+          formData.password,
+          formData.fullname,
+          dateofbirth
+        );
+
+        if (result.success) {
+          setToast({
+            message: 'Đăng ký thành công! Đang chuyển đến trang đăng nhập...',
+            type: 'success'
+          });
+          setTimeout(() => {
+            navigate('/login');
+          }, 2000);
+        } else {
+          setToast({
+            message: result.message || 'Đăng ký thất bại. Vui lòng thử lại.',
+            type: 'error'
+          });
+          setIsSubmitting(false);
+        }
+      } catch (error) {
+        console.error('Register error:', error);
+        setToast({
+          message: 'Có lỗi xảy ra. Vui lòng thử lại sau.',
+          type: 'error'
+        });
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -201,25 +211,25 @@ function RegisterForm() {
         <form onSubmit={handleSubmit} noValidate>
           {/* Họ Tên */}
           <div className="mb-6">
-            <label htmlFor="fullName" className="block mb-2 text-gray-700 font-semibold text-sm">
+            <label htmlFor="fullname" className="block mb-2 text-gray-700 font-semibold text-sm">
               Họ và tên <span className="text-red-600">*</span>
             </label>
             <input
               type="text"
-              id="fullName"
-              name="fullName"
-              value={formData.fullName}
+              id="fullname"
+              name="fullname"
+              value={formData.fullname}
               onChange={handleChange}
               onBlur={handleBlur}
               className={`w-full px-4 py-3 border-2 rounded-lg text-sm transition-all duration-300 ${
-                errors.fullName && touched.fullName 
+                errors.fullname && touched.fullname 
                   ? 'border-red-600 focus:ring-red-100' 
                   : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-100'
               } focus:outline-none focus:ring-4`}
               placeholder="Nguyễn Văn A"
             />
-            {errors.fullName && touched.fullName && (
-              <span className="block text-red-600 text-xs mt-1.5 font-medium">{errors.fullName}</span>
+            {errors.fullname && touched.fullname && (
+              <span className="block text-red-600 text-xs mt-1.5 font-medium">{errors.fullname}</span>
             )}
           </div>
 
@@ -247,34 +257,10 @@ function RegisterForm() {
             )}
           </div>
 
-          {/* Số điện thoại */}
-          <div className="mb-6">
-            <label htmlFor="phone" className="block mb-2 text-gray-700 font-semibold text-sm">
-              Số điện thoại <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`w-full px-4 py-3 border-2 rounded-lg text-sm transition-all duration-300 ${
-                errors.phone && touched.phone 
-                  ? 'border-red-600 focus:ring-red-100' 
-                  : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-100'
-              } focus:outline-none focus:ring-4`}
-              placeholder="0912345678"
-            />
-            {errors.phone && touched.phone && (
-              <span className="block text-red-600 text-xs mt-1.5 font-medium">{errors.phone}</span>
-            )}
-          </div>
-
           {/* Ngày sinh */}
           <div className="mb-6">
             <label htmlFor="dateOfBirth" className="block mb-2 text-gray-700 font-semibold text-sm">
-              Ngày sinh <span className="text-red-600">*</span>
+              Ngày sinh <span className="text-gray-500 font-normal">(Không bắt buộc)</span>
             </label>
             <input
               type="date"
@@ -338,7 +324,7 @@ function RegisterForm() {
               <span className="block text-red-600 text-xs mt-1.5 font-medium">{errors.password}</span>
             )}
             <small className="block text-gray-500 text-xs mt-1.5">
-              Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt
+              Mật khẩu phải có ít nhất 6 ký tự
             </small>
           </div>
 
@@ -387,10 +373,15 @@ function RegisterForm() {
           </div>
 
           <button 
-            type="submit" 
-            className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-base font-semibold cursor-pointer transition-all duration-300 mt-2 hover:transform hover:-translate-y-0.5 hover:shadow-xl active:transform-none"
+            type="submit"
+            disabled={isSubmitting}
+            className={`w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-base font-semibold cursor-pointer transition-all duration-300 mt-2 ${
+              isSubmitting
+                ? 'opacity-50 cursor-not-allowed'
+                : 'hover:transform hover:-translate-y-0.5 hover:shadow-xl active:transform-none'
+            }`}
           >
-            Đăng ký
+            {isSubmitting ? 'Đang xử lý...' : 'Đăng ký'}
           </button>
 
           <p className="text-center mt-6 text-gray-600 text-sm">
@@ -398,6 +389,16 @@ function RegisterForm() {
           </p>
         </form>
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <Toast 
+          message={toast.message}
+          type={toast.type}
+          duration={toast.type === 'success' ? 2000 : 4000}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

@@ -4,6 +4,8 @@ import RegisterForm from './RegisterForm'
 import LoginPage from './LoginPage'
 import QuizPage from './QuizPage'
 import ResultPage from './ResultPage'
+import MyProfile from './MyProfile'
+import Dashboard from './Dashboard'
 import ChatBox from './ChatBox'
 
 function App() {
@@ -15,6 +17,8 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/quiz" element={<QuizPage />} />
         <Route path="/result" element={<ResultPage />} />
+        <Route path="/profile" element={<MyProfile />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
       <ChatBox />
     </Router>
