@@ -61,7 +61,7 @@ function MyProfile() {
             setFormData({
               fullname: apiUser.fullname || currentUser.fullname || '',
               email: apiUser.email || currentUser.email || '',
-              dateOfBirth: apiUser.dateofbirth || ''
+              dateOfBirth: apiUser.dateOfBirth || apiUser.dateofbirth || ''
             });
             return;
           }
@@ -74,7 +74,7 @@ function MyProfile() {
         setFormData({
           fullname: currentUser.fullname || '',
           email: currentUser.email || '',
-          dateOfBirth: ''
+          dateOfBirth: currentUser.dateOfBirth || currentUser.dateofbirth || ''
         });
         console.log('========================');
       } catch (error) {
@@ -86,7 +86,7 @@ function MyProfile() {
           setFormData({
             fullname: currentUser.fullname || '',
             email: currentUser.email || '',
-            dateOfBirth: ''
+            dateOfBirth: currentUser.dateOfBirth || currentUser.dateofbirth || ''
           });
         }
       }
@@ -230,7 +230,7 @@ function MyProfile() {
     setFormData({
       fullname: user.fullname || '',
       email: user.email || '',
-      dateOfBirth: user.dateofbirth || ''
+      dateOfBirth: user.dateOfBirth || user.dateofbirth || ''
     });
     setErrors({});
   };
