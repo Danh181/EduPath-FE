@@ -6,6 +6,7 @@ import QuizPage from './QuizPage'
 import ResultPage from './ResultPage'
 import MyProfile from './MyProfile'
 import Dashboard from './Dashboard'
+import UserManagement from './UserManagement'
 import ChatBox from './ChatBox'
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/result" element={<ResultPage />} />
         <Route path="/profile" element={<MyProfile />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/user-management" element={<UserManagement />} />
       </Routes>
       <ChatBox />
     </Router>

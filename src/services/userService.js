@@ -21,13 +21,15 @@ export const getUserProfile = async (userId) => {
 // Update user profile
 export const updateUserProfile = async (userId, userData) => {
   try {
-    const response = await api.post('/api/user/Update', {
-      userid: userId,
+    // BE expects: PUT /api/User/{id} with UpdateUser DTO
+    const response = await api.put(`/api/User/${userId}`, {
       fullname: userData.fullname,
       email: userData.email,
-      dateofbirth: userData.dateofbirth,
-      // Keep other fields that might be required by API
-      isactive: true
+      DateOfBirth: userData.DateOfBirth || null,
+      password: userData.password || null,
+      roleid: userData.roleid || null,
+      organizationid: userData.organizationid || null,
+      isActive: userData.isActive // BE expects isActive
     });
 
     return {
@@ -65,6 +67,7 @@ export const getAllUsers = async () => {
 // Delete user (admin only)
 export const deleteUser = async (userId) => {
   try {
+    // BE requires currentUserId from JWT token (sent automatically via Authorization header)
     const response = await api.delete(`/api/user/${userId}`);
     
     return {
@@ -73,9 +76,60 @@ export const deleteUser = async (userId) => {
     };
   } catch (error) {
     console.error('Delete user error:', error);
+    
+    // Handle specific error messages from BE
+    let message = 'Failed to delete user';
+    if (error.response?.status === 403) {
+      message = error.response.data.message || 'Bạn không có quyền xóa người dùng này';
+    }
+    
     return {
       success: false,
-      message: error.response?.data?.message || 'Failed to delete user'
+      message: error.response?.data?.message || message
+    };
+  }
+};
+
+// Create user (admin only)
+export const createUser = async (userData) => {
+  try {
+    const response = await api.post('/api/user', {
+      fullname: userData.fullname,
+      email: userData.email,
+      password: userData.password,
+      roleid: userData.roleid,
+      DateOfBirth: userData.DateOfBirth || null
+      // isactive is set to true by default in BE, no need to send
+    });
+    
+    return {
+      success: true,
+      message: response.data.message || 'User created successfully',
+      user: response.data.data || response.data
+    };
+  } catch (error) {
+    console.error('Create user error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to create user'
+    };
+  }
+};
+
+// Search user by name
+export const searchUserByName = async (name) => {
+  try {
+    const response = await api.get(`/api/user/by-name/${name}`);
+    
+    return {
+      success: true,
+      user: response.data.data || response.data
+    };
+  } catch (error) {
+    console.error('Search user error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'User not found'
     };
   }
 };

@@ -61,7 +61,7 @@ function MyProfile() {
             setFormData({
               fullname: apiUser.fullname || currentUser.fullname || '',
               email: apiUser.email || currentUser.email || '',
-              dateOfBirth: apiUser.dateOfBirth || apiUser.dateofbirth || ''
+              dateOfBirth: apiUser.DateOfBirth || apiUser.dateOfBirth || apiUser.dateofbirth || ''
             });
             return;
           }
@@ -74,7 +74,7 @@ function MyProfile() {
         setFormData({
           fullname: currentUser.fullname || '',
           email: currentUser.email || '',
-          dateOfBirth: currentUser.dateOfBirth || currentUser.dateofbirth || ''
+          dateOfBirth: currentUser.DateOfBirth || currentUser.dateOfBirth || currentUser.dateofbirth || ''
         });
         console.log('========================');
       } catch (error) {
@@ -86,7 +86,7 @@ function MyProfile() {
           setFormData({
             fullname: currentUser.fullname || '',
             email: currentUser.email || '',
-            dateOfBirth: currentUser.dateOfBirth || currentUser.dateofbirth || ''
+            dateOfBirth: currentUser.DateOfBirth || currentUser.dateOfBirth || currentUser.dateofbirth || ''
           });
         }
       }
@@ -171,7 +171,7 @@ function MyProfile() {
           const result = await updateUserProfile(user.userId, {
             fullname: formData.fullname,
             email: formData.email,
-            dateofbirth: formData.dateOfBirth || null
+            DateOfBirth: formData.dateOfBirth || null // BE expects DateOfBirth (capital D and B)
           });
 
           if (result.success) {
@@ -230,7 +230,7 @@ function MyProfile() {
     setFormData({
       fullname: user.fullname || '',
       email: user.email || '',
-      dateOfBirth: user.dateOfBirth || user.dateofbirth || ''
+      dateOfBirth: user.DateOfBirth || user.dateOfBirth || user.dateofbirth || ''
     });
     setErrors({});
   };
