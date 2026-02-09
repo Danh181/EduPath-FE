@@ -22,6 +22,7 @@ function App() {
         <Route path="/profile" element={<MyProfile />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/user-management" element={<UserManagement />} />
+        <Route path="/users" element={<UserManagement />} />
         <Route path="/universities" element={<UniversityManagement />} />
       </Routes>
       <ChatBox />

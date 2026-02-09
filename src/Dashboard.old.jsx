@@ -1,64 +1,78 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from './hooks/useAuth';
-import { useToast } from './hooks/useToast';
+import { getCurrentUser, isAuthenticated, logout } from './services/authService';
 import { getAllUsers } from './services/userService';
 import { getAllUniversities } from './services/universityService';
-import { UserDropdown, Loading } from './components/shared';
 import Toast from './components/Toast';
 
 function Dashboard() {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalUniversities, setTotalUniversities] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [dataLoading, setDataLoading] = useState(true);
-
-  // Auth
-  const { user, loading: authLoading, error: authError } = useAuth({
-    requireAuth: true,
-    requireRole: 'admin',
-    redirectTo: '/'
-  });
-
-  // Toast
-  const { toast, showSuccess, showError, showToast } = useToast();
 
   useEffect(() => {
-    if (authError) {
-      showError(authError);
+    // Check authentication and role
+    if (!isAuthenticated()) {
+      navigate('/login');
+      return;
     }
-  }, [authError]);
 
-  useEffect(() => {
-    if (user) {
-      loadData();
+    const currentUser = getCurrentUser();
+    
+    // Check if user is Admin (case-insensitive)
+    if (!currentUser?.role || currentUser.role.toLowerCase() !== 'admin') {
+      setToast({
+        message: '⚠️ Bạn không có quyền truy cập trang này!',
+        type: 'error',
+        duration: 3000
+      });
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
+      return;
     }
-  }, [user]);
 
-  const loadData = async () => {
-    setDataLoading(true);
-    await Promise.all([loadTotalUsers(), loadTotalUniversities()]);
-    setDataLoading(false);
-  };
+    setUser(currentUser);
+
+    // Load total users and universities
+    loadTotalUsers();
+    loadTotalUniversities();
+  }, [navigate]);
 
   const loadTotalUsers = async () => {
     try {
+      setLoading(true);
       const result = await getAllUsers();
+      
       if (result.success && result.users) {
         setTotalUsers(result.users.length);
       } else {
-        showError('⚠️ Không thể tải dữ liệu người dùng');
+        setToast({
+          message: '⚠️ Không thể tải dữ liệu người dùng',
+          type: 'error',
+          duration: 3000
+        });
       }
     } catch (error) {
       console.error('Error loading users:', error);
-      showError('❌ Lỗi khi tải dữ liệu');
+      setToast({
+        message: '❌ Lỗi khi tải dữ liệu',
+        type: 'error',
+        duration: 3000
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const loadTotalUniversities = async () => {
     try {
       const result = await getAllUniversities();
+      
       if (result.success && result.universities) {
         setTotalUniversities(result.universities.length);
       }
@@ -68,19 +82,28 @@ function Dashboard() {
   };
 
   const handleLogout = () => {
-    showToast('👋 Đã đăng xuất thành công!', 'success', 1500);
+    logout();
+    setToast({
+      message: '👋 Đã đăng xuất thành công!',
+      type: 'success',
+      duration: 1500
+    });
     setTimeout(() => {
       navigate('/login');
     }, 1500);
   };
 
-  const handleRefresh = () => {
-    loadData();
-    showSuccess('Đã làm mới dữ liệu!');
-  };
-
-  if (authLoading || dataLoading) {
-    return <Loading fullScreen message="Đang tải dữ liệu..." />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-2xl">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-700 font-semibold">Đang tải dữ liệu...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -98,13 +121,48 @@ function Dashboard() {
           </div>
 
           {user && (
-            <UserDropdown
-              user={user}
-              isOpen={showDropdown}
-              onToggle={() => setShowDropdown(!showDropdown)}
-              onLogout={handleLogout}
-              showAdminLinks={true}
-            />
+            <div className="relative">
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 transition-all duration-300"
+              >
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                  {user.fullname?.charAt(0).toUpperCase() || 'A'}
+                </div>
+                <span className="font-semibold text-gray-700">{user.fullname || 'Admin'}</span>
+                <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl py-2 z-50 border border-gray-100 animate-fadeIn">
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors no-underline text-gray-700"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    <span className="text-xl">👤</span>
+                    <span className="font-medium">Thông tin cá nhân</span>
+                  </Link>
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors no-underline text-gray-700"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    <span className="text-xl">📊</span>
+                    <span className="font-medium">Dashboard</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-red-600"
+                  >
+                    <span className="text-xl">🚪</span>
+                    <span className="font-medium">Đăng xuất</span>
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </header>
@@ -120,7 +178,7 @@ function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Total Users Card */}
           <Link 
-            to="/users"
+            to="/user-management"
             className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:transform hover:-translate-y-1 no-underline cursor-pointer"
           >
             <div className="flex items-center justify-between mb-4">
@@ -175,7 +233,7 @@ function Dashboard() {
                 <span>Về trang chủ</span>
               </Link>
               <button
-                onClick={handleRefresh}
+                onClick={loadTotalUsers}
                 className="w-full flex items-center gap-3 px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all font-semibold shadow-md hover:shadow-lg"
               >
                 <span className="text-xl">🔄</span>
@@ -239,8 +297,15 @@ function Dashboard() {
         </div>
       </main>
 
-      {/* Toast */}
-      {toast && <Toast key={toast.id} {...toast} />}
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration || 3000}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
