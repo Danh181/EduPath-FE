@@ -77,9 +77,10 @@ function OrganizationDashboard() {
     }));
   }, [userCRUD.data]);
 
-  // Multi-filter for Users (search + status filter)
+  // Multi-filter for Users (search + role filter + status filter)
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const userFilters = useMultiFilter(normalizedUsers, {
+    role: 'all',
     isActive: 'all'
   });
 
@@ -164,6 +165,14 @@ function OrganizationDashboard() {
     { value: 'all', label: 'Tất cả' },
     { value: 'active', label: 'Hoạt động' },
     { value: 'inactive', label: 'Không hoạt động' }
+  ];
+
+  // Get unique roles for filter
+  const roleFilterOptions = [
+    { value: 'all', label: 'Tất cả vai trò' },
+    ...Array.from(new Set(normalizedUsers.map(u => u.role)))
+      .filter(Boolean)
+      .map(role => ({ value: role, label: role }))
   ];
 
   return (
@@ -252,6 +261,11 @@ function OrganizationDashboard() {
         {/* Filters and Search */}
         <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
           <div className="flex items-center gap-3 mb-3">
+            <FilterDropdown
+              value={userFilters.filters.role}
+              onChange={(val) => userFilters.setFilter('role', val)}
+              options={roleFilterOptions}
+            />
             <FilterDropdown
               value={userFilters.filters.isActive === 'all' ? 'all' : userFilters.filters.isActive ? 'active' : 'inactive'}
               onChange={(val) => {
