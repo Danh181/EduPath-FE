@@ -7,6 +7,7 @@ import { useMultiFilter } from './hooks/useSearch';
 import { useCRUD } from './hooks/useCRUD';
 import { getUsersByOrganization, deleteUser, createUser, updateUserProfile } from './services/userService';
 import { getAllRoles } from './services/roleService';
+import { logout } from './services/authService';
 import { Modal, SearchBar, FilterDropdown, UserDropdown, Loading, ConfirmDialog } from './components/shared';
 import UserTable from './components/user/UserTable';
 import Toast from './components/Toast';
@@ -152,10 +153,7 @@ function OrganizationDashboard() {
   };
 
   const handleLogout = () => {
-    showToast('👋 Đã đăng xuất thành công!', 'success', 1500);
-    setTimeout(() => {
-      navigate('/login');
-    }, 1500);
+    logout(); // This will immediately redirect to /login
   };
 
   if (authLoading || userCRUD.loading || !organizationId) {

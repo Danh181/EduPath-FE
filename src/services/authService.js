@@ -199,6 +199,7 @@ export const register = async (email, password, fullname, dateofbirth) => {
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  // Immediate redirect without delay
   window.location.href = '/login';
 };
 

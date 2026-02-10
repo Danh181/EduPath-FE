@@ -136,10 +136,7 @@ function UniversityManagement() {
   };
 
   const handleLogout = () => {
-    showToast('👋 Đã đăng xuất thành công!', 'success', 1500);
-    setTimeout(() => {
-      navigate('/login');
-    }, 1500);
+    logout(); // This will immediately redirect to /login
   };
 
   if (authLoading || universityCRUD.loading) {

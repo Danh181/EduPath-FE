@@ -30,9 +30,7 @@ function HomePage() {
   }, []);
 
   const handleLogout = () => {
-    logout();
-    setUser(null);
-    setShowDropdown(false);
+    logout(); // This will immediately redirect to /login
   };
 
   // Get first letter of name for avatar

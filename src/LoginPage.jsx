@@ -84,20 +84,20 @@ function LoginPage() {
         console.log('Message:', result.message);
 
         if (result.success) {
-          console.log('Login SUCCESS - showing success toast');
+          console.log('Login SUCCESS - redirecting immediately');
           
           // Check user role and redirect accordingly (case-insensitive)
           const userRole = result.user?.role?.toLowerCase();
-          const redirectPath = userRole === 'admin' ? '/dashboard' : '/';
+          let redirectPath = '/home';
           
-          setToast({
-            message: '✨ Đăng nhập thành công! Đang chuyển hướng...',
-            type: 'success',
-            duration: 1500
-          });
-          setTimeout(() => {
-            navigate(redirectPath);
-          }, 1500);
+          if (userRole === 'admin') {
+            redirectPath = '/dashboard';
+          } else if (userRole === 'organization') {
+            redirectPath = '/organization-dashboard';
+          }
+          
+          // Immediate redirect without delay
+          navigate(redirectPath);
         } else {
           // Login failed - show error toast
           console.log('Login FAILED - showing error toast');

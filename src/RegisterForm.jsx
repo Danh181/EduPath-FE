@@ -1,197 +1,80 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register } from './services/authService';
+import { useFormValidation } from './hooks/useFormValidation';
+import { useToast } from './hooks/useToast';
 import Toast from './components/Toast';
 
 function RegisterForm() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    fullname: '',
-    email: '',
-    dateOfBirth: '',
-    password: '',
-    confirmPassword: ''
-  });
-
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [toast, setToast] = useState(null);
 
-  // Validate từng field
-  const validateField = (name, value) => {
-    let error = '';
+  // Toast hook
+  const { toast, showSuccess, showError, hideToast } = useToast();
 
-    switch (name) {
-      case 'fullname':
-        if (!value.trim()) {
-          error = 'Họ tên không được để trống';
-        } else if (value.trim().length < 2) {
-          error = 'Họ tên phải có ít nhất 2 ký tự';
-        } else if (value.trim().length > 255) {
-          error = 'Họ tên không được quá 255 ký tự';
-        }
-        break;
-
-      case 'email':
-        if (!value.trim()) {
-          error = 'Email không được để trống';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          error = 'Email không hợp lệ';
-        }
-        break;
-
-      case 'dateOfBirth':
-        // Optional field - chỉ validate nếu có value
-        if (value) {
-          const birthDate = new Date(value);
-          const today = new Date();
-          let age = today.getFullYear() - birthDate.getFullYear();
-          const monthDiff = today.getMonth() - birthDate.getMonth();
-          
-          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-          }
-          
-          if (birthDate > today) {
-            error = 'Ngày sinh không được là ngày trong tương lai';
-          } else if (age < 13) {
-            error = 'Bạn phải từ 13 tuổi trở lên';
-          } else if (age > 100) {
-            error = 'Ngày sinh không hợp lệ';
-          }
-        }
-        break;
-
-      case 'password':
-        if (!value) {
-          error = 'Mật khẩu không được để trống';
-        } else if (value.length < 6) {
-          error = 'Mật khẩu phải có ít nhất 6 ký tự';
-        }
-        break;
-
-      case 'confirmPassword':
-        if (!value) {
-          error = 'Vui lòng xác nhận mật khẩu';
-        } else if (value !== formData.password) {
-          error = 'Mật khẩu xác nhận không khớp';
-        }
-        break;
-
-      default:
-        break;
-    }
-
-    return error;
-  };
-
-  // Validate toàn bộ form
-  const validateForm = () => {
-    const newErrors = {};
-    Object.keys(formData).forEach(key => {
-      const error = validateField(key, formData[key]);
-      if (error) {
-        newErrors[key] = error;
-      }
-    });
-    return newErrors;
-  };
+  // Form validation hook
+  const {
+    formData,
+    errors,
+    touched,
+    handleChange: formHandleChange,
+    handleBlur,
+    validateForm,
+    touchAllFields
+  } = useFormValidation(
+    {
+      fullname: '',
+      email: '',
+      dateOfBirth: '',
+      password: '',
+      confirmPassword: ''
+    },
+    ['fullname', 'email', 'dateOfBirth', 'password', 'confirmPassword']
+  );
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    // Validate ngay khi user đang nhập (nếu field đã được touch)
-    if (touched[name]) {
-      const error = validateField(name, value);
-      setErrors(prev => ({
-        ...prev,
-        [name]: error
-      }));
-    }
-
-    // Validate lại confirmPassword khi password thay đổi
-    if (name === 'password' && touched.confirmPassword) {
-      const confirmError = validateField('confirmPassword', formData.confirmPassword);
-      setErrors(prev => ({
-        ...prev,
-        confirmPassword: confirmError
-      }));
-    }
-  };
-
-  const handleBlur = (e) => {
-    const { name, value } = e.target;
-    setTouched(prev => ({
-      ...prev,
-      [name]: true
-    }));
-
-    const error = validateField(name, value);
-    setErrors(prev => ({
-      ...prev,
-      [name]: error
-    }));
+    formHandleChange(e);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Mark all fields as touched
-    const allTouched = Object.keys(formData).reduce((acc, key) => {
-      acc[key] = true;
-      return acc;
-    }, {});
-    setTouched(allTouched);
+    touchAllFields();
 
     // Validate toàn bộ form
-    const newErrors = validateForm();
-    setErrors(newErrors);
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
 
-    // Nếu không có lỗi thì submit
-    if (Object.keys(newErrors).length === 0) {
-      setIsSubmitting(true);
+    setIsSubmitting(true);
 
-      try {
-        // Convert date format (YYYY-MM-DD) hoặc null
-        const dateofbirth = formData.dateOfBirth ? formData.dateOfBirth : null;
+    try {
+      const dateofbirth = formData.dateOfBirth || null;
 
-        const result = await register(
-          formData.email,
-          formData.password,
-          formData.fullname,
-          dateofbirth
-        );
+      const result = await register(
+        formData.email,
+        formData.password,
+        formData.fullname,
+        dateofbirth
+      );
 
-        if (result.success) {
-          setToast({
-            message: 'Đăng ký thành công! Đang chuyển đến trang đăng nhập...',
-            type: 'success'
-          });
-          setTimeout(() => {
-            navigate('/login');
-          }, 2000);
-        } else {
-          setToast({
-            message: result.message || 'Đăng ký thất bại. Vui lòng thử lại.',
-            type: 'error'
-          });
-          setIsSubmitting(false);
-        }
-      } catch (error) {
-        console.error('Register error:', error);
-        setToast({
-          message: 'Có lỗi xảy ra. Vui lòng thử lại sau.',
-          type: 'error'
-        });
-        setIsSubmitting(false);
+      if (result.success) {
+        showSuccess('Đăng ký thành công! Đang chuyển đến trang đăng nhập...');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else {
+        showError(result.message || 'Đăng ký thất bại. Vui lòng thử lại.');
       }
+    } catch (error) {
+      console.error('Register error:', error);
+      showError('Có lỗi xảy ra. Vui lòng thử lại sau.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -391,14 +274,7 @@ function RegisterForm() {
       </div>
 
       {/* Toast notification */}
-      {toast && (
-        <Toast 
-          message={toast.message}
-          type={toast.type}
-          duration={toast.type === 'success' ? 2000 : 4000}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast key={toast.id} {...toast} onClose={hideToast} />}
     </div>
   );
 }

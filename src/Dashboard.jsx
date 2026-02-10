@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth';
 import { useToast } from './hooks/useToast';
 import { getAllUsers } from './services/userService';
 import { getAllUniversities } from './services/universityService';
+import { logout } from './services/authService';
 import { UserDropdown, Loading } from './components/shared';
 import Toast from './components/Toast';
 
@@ -68,10 +69,7 @@ function Dashboard() {
   };
 
   const handleLogout = () => {
-    showToast('👋 Đã đăng xuất thành công!', 'success', 1500);
-    setTimeout(() => {
-      navigate('/login');
-    }, 1500);
+    logout(); // This will immediately redirect to /login
   };
 
   const handleRefresh = () => {

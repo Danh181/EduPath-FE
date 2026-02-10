@@ -2,20 +2,30 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentUser, isAuthenticated, logout } from './services/authService';
 import { getUserProfile, updateUserProfile } from './services/userService';
+import { useFormValidation } from './hooks/useFormValidation';
+import { useToast } from './hooks/useToast';
 import Toast from './components/Toast';
 
 function MyProfile() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [formData, setFormData] = useState({
-    fullname: '',
-    email: '',
-    dateOfBirth: ''
-  });
-  const [errors, setErrors] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toast, setToast] = useState(null);
+
+  // Toast hook
+  const { toast, showSuccess, showError, hideToast } = useToast();
+
+  // Form validation hook
+  const {
+    formData,
+    errors,
+    handleChange,
+    validateForm,
+    setFormValues
+  } = useFormValidation(
+    { fullname: '', email: '', dateOfBirth: '' },
+    ['fullname', 'email', 'dateOfBirth']
+  );
 
   useEffect(() => {
     // Check authentication
@@ -58,7 +68,7 @@ function MyProfile() {
             
             console.log('Merged user data:', mergedUser);
             setUser(mergedUser);
-            setFormData({
+            setFormValues({
               fullname: apiUser.fullname || currentUser.fullname || '',
               email: apiUser.email || currentUser.email || '',
               dateOfBirth: apiUser.DateOfBirth || apiUser.dateOfBirth || apiUser.dateofbirth || ''
@@ -71,7 +81,7 @@ function MyProfile() {
         console.log('Using localStorage data as fallback');
         console.log('Fullname from localStorage:', currentUser.fullname);
         setUser(currentUser);
-        setFormData({
+        setFormValues({
           fullname: currentUser.fullname || '',
           email: currentUser.email || '',
           dateOfBirth: currentUser.DateOfBirth || currentUser.dateOfBirth || currentUser.dateofbirth || ''
@@ -83,7 +93,7 @@ function MyProfile() {
         const currentUser = getCurrentUser();
         if (currentUser) {
           setUser(currentUser);
-          setFormData({
+          setFormValues({
             fullname: currentUser.fullname || '',
             email: currentUser.email || '',
             dateOfBirth: currentUser.DateOfBirth || currentUser.dateOfBirth || currentUser.dateofbirth || ''
@@ -93,92 +103,51 @@ function MyProfile() {
     };
 
     loadUserProfile();
-  }, [navigate]);
+  }, [navigate, setFormValues]);
 
-  const validateField = (name, value) => {
-    let error = '';
-
-    if (name === 'fullname') {
-      if (!value.trim()) {
-        error = 'Họ tên không được để trống';
-      } else if (value.trim().length < 2) {
-        error = 'Họ tên phải có ít nhất 2 ký tự';
-      } else if (value.trim().length > 255) {
-        error = 'Họ tên không được quá 255 ký tự';
-      }
-    } else if (name === 'email') {
-      if (!value.trim()) {
-        error = 'Email không được để trống';
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        error = 'Email không hợp lệ';
-      }
-    } else if (name === 'dateOfBirth' && value) {
-      const birthDate = new Date(value);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      
-      if (birthDate > today) {
-        error = 'Ngày sinh không được là ngày trong tương lai';
-      } else if (age < 13) {
-        error = 'Bạn phải từ 13 tuổi trở lên';
-      } else if (age > 100) {
-        error = 'Ngày sinh không hợp lệ';
-      }
-    }
-
-    return error;
+  const handleLogout = () => {
+    logout(); // This will immediately redirect to /login
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    // Clear error when typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+  const handleCancel = () => {
+    setIsEditing(false);
+    // Reset form to original values
+    if (user) {
+      setFormValues({
+        fullname: user.fullname || '',
+        email: user.email || '',
+        dateOfBirth: user.DateOfBirth || user.dateOfBirth || user.dateofbirth || ''
+      });
     }
+  };
+
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.charAt(0).toUpperCase();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validate all fields
-    const newErrors = {};
-    ['fullname', 'email', 'dateOfBirth'].forEach(field => {
-      const error = validateField(field, formData[field]);
-      if (error) newErrors[field] = error;
-    });
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
 
-    setErrors(newErrors);
+    setIsSubmitting(true);
 
-    if (Object.keys(newErrors).length === 0) {
-      setIsSubmitting(true);
-
-      try {
-        // Nếu có userId thì call API update
-        if (user.userId) {
+    try {
+      // Nếu có userId thì call API update
+      if (user.userId) {
           const result = await updateUserProfile(user.userId, {
             fullname: formData.fullname,
             email: formData.email,
-            DateOfBirth: formData.dateOfBirth || null // BE expects DateOfBirth (capital D and B)
+            DateOfBirth: formData.dateOfBirth || null
           });
 
           if (result.success) {
-            setToast({
-              message: 'Cập nhật thông tin thành công!',
-              type: 'success'
-            });
+            showSuccess('Cập nhật thông tin thành công!');
             setIsEditing(false);
             
             // Update user in localStorage
@@ -190,18 +159,11 @@ function MyProfile() {
             localStorage.setItem('user', JSON.stringify(updatedUser));
             setUser(updatedUser);
           } else {
-            setToast({
-              message: result.message || 'Cập nhật thất bại. Vui lòng thử lại.',
-              type: 'error'
-            });
+            showError(result.message || 'Cập nhật thất bại. Vui lòng thử lại.');
           }
         } else {
           // Không có userId, chỉ update localStorage
-          console.log('No userId, updating localStorage only');
-          setToast({
-            message: 'Cập nhật thông tin thành công (chỉ lưu local)!',
-            type: 'success'
-          });
+          showSuccess('Cập nhật thông tin thành công!');
           setIsEditing(false);
           
           const updatedUser = {
@@ -214,58 +176,31 @@ function MyProfile() {
         }
       } catch (error) {
         console.error('Update profile error:', error);
-        setToast({
-          message: 'Có lỗi xảy ra. Vui lòng thử lại sau.',
-          type: 'error'
-        });
+        showError('Có lỗi xảy ra. Vui lòng thử lại sau.');
       } finally {
         setIsSubmitting(false);
       }
-    }
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    // Reset form data
-    setFormData({
-      fullname: user.fullname || '',
-      email: user.email || '',
-      dateOfBirth: user.DateOfBirth || user.dateOfBirth || user.dateofbirth || ''
-    });
-    setErrors({});
-  };
-
-  const getInitials = (name) => {
-    if (!name) return 'U';
-    return name.charAt(0).toUpperCase();
-  };
-
+  // Show loading or redirect if no user
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
-        <div className="text-white text-xl">Đang tải...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm z-50">
-        <div className="max-w-full mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            {/* Back to Home Button */}
-            <Link 
-              to="/" 
-              className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all duration-300 no-underline group"
-              title="Quay về trang chủ"
-            >
-              <svg className="w-5 h-5 text-gray-700 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </Link>
-            
-            <Link to="/" className="flex items-center gap-2 no-underline">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md shadow-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 md:px-6 py-4">
+          <div className="flex items-center gap-2">
+            <Link to="/home" className="flex items-center gap-2 no-underline hover:opacity-80 transition">
               <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -299,8 +234,8 @@ function MyProfile() {
             )}
             
             <button
-              onClick={logout}
-              className="px-4 md:px-6 py-2.5 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50 transition-all duration-300"
+              onClick={handleLogout}
+              className="px-4 md:px-6 py-2.5 rounded-lg text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-all duration-300"
             >
               Đăng xuất
             </button>
@@ -450,13 +385,7 @@ function MyProfile() {
       </div>
 
       {/* Toast Notification */}
-      {toast && (
-        <Toast 
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast key={toast.id} {...toast} onClose={hideToast} />}
     </div>
   );
 }
