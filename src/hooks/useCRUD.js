@@ -43,7 +43,7 @@ export function useCRUD(services = {}, options = {}) {
       
       if (result.success) {
         // Handle different response structures
-        const items = result.data || result.users || result.universities || result.majors || result.roles || [];
+        const items = result.data || result.users || result.universities || result.majors || result.roles || result.organizations || [];
         setData(items);
         return { success: true, data: items };
       } else {

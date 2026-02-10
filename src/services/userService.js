@@ -133,3 +133,22 @@ export const searchUserByName = async (name) => {
     };
   }
 };
+
+// Get users by organization (for Organization role)
+export const getUsersByOrganization = async () => {
+  try {
+    // This endpoint uses JWT token to automatically filter by organizationid
+    const response = await api.get('/api/User/users');
+    
+    return {
+      success: true,
+      users: response.data.data || response.data
+    };
+  } catch (error) {
+    console.error('Get organization users error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to get organization users'
+    };
+  }
+};

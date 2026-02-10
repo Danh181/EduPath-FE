@@ -7,6 +7,7 @@ import { useMultiFilter } from './hooks/useSearch';
 import { useCRUD } from './hooks/useCRUD';
 import { getAllUsers, deleteUser, createUser, updateUserProfile } from './services/userService';
 import { getAllRoles, createRole, updateRole, deleteRole } from './services/roleService';
+import { getAllOrganizations, createOrganizationAccount, updateOrganization, deleteOrganization } from './services/organizationService';
 import { Modal, SearchBar, FilterDropdown, UserDropdown, Loading, ConfirmDialog } from './components/shared';
 import UserTable from './components/user/UserTable';
 import UserForm from './components/user/UserForm';
@@ -35,6 +36,8 @@ function UserManagement() {
   const editUserModal = useModal();
   const createRoleModal = useModal();
   const editRoleModal = useModal();
+  const createOrgModal = useModal();
+  const editOrgModal = useModal();
 
   // Users CRUD
   const userCRUD = useCRUD({
@@ -53,6 +56,17 @@ function UserManagement() {
     create: createRole,
     update: updateRole,
     delete: deleteRole
+  }, {
+    onSuccess: (msg) => showSuccess(msg),
+    onError: (msg) => showError(msg)
+  });
+
+  // Organizations CRUD
+  const organizationCRUD = useCRUD({
+    getAll: getAllOrganizations,
+    create: createOrganizationAccount,
+    update: updateOrganization,
+    delete: deleteOrganization
   }, {
     onSuccess: (msg) => showSuccess(msg),
     onError: (msg) => showError(msg)
@@ -107,11 +121,38 @@ function UserManagement() {
     return r.RoleName?.toLowerCase().includes(query);
   });
 
+  // Normalize organization data
+  const normalizedOrganizations = useMemo(() => {
+    return organizationCRUD.data.map(org => ({
+      ...org,
+      organizationId: org.organizationId || org.organizationid,
+      organizationName: org.organizationName || org.organizationname,
+      type: org.type || org.Type,
+      status: org.status ?? org.Status
+    }));
+  }, [organizationCRUD.data]);
+
+  // Multi-filter for Organizations
+  const [orgSearchQuery, setOrgSearchQuery] = useState('');
+  const orgFilters = useMultiFilter(normalizedOrganizations, {
+    status: 'all'
+  });
+
+  const filteredOrganizations = orgFilters.filteredData.filter(o => {
+    if (!orgSearchQuery.trim()) return true;
+    const query = orgSearchQuery.toLowerCase();
+    return (
+      o.organizationName?.toLowerCase().includes(query) ||
+      o.type?.toLowerCase().includes(query)
+    );
+  });
+
   // Load data on mount
   useEffect(() => {
     if (user) {
       userCRUD.loadData();
       roleCRUD.loadData();
+      organizationCRUD.loadData();
     }
   }, [user]);
 
@@ -167,6 +208,33 @@ function UserManagement() {
     if (deleteConfirm.id) {
       await roleCRUD.deleteItem(deleteConfirm.id);
       setDeleteConfirm({ isOpen: false, id: null, name: '', type: '' });
+    }
+  };
+
+  // Handlers for Organizations
+  const handleCreateOrganization = async (formData) => {
+    const result = await organizationCRUD.createItem(formData);
+    if (result.success) {
+      createOrgModal.close();
+      organizationCRUD.loadData(); // Reload to get the new org
+    }
+  };
+
+  const handleEditOrganization = async (formData) => {
+    if (editOrgModal.data) {
+      const result = await organizationCRUD.updateItem(editOrgModal.data.organizationId, formData);
+      if (result.success) {
+        editOrgModal.close();
+        organizationCRUD.loadData();
+      }
+    }
+  };
+
+  const handleDeleteOrganization = async () => {
+    if (deleteConfirm.id) {
+      await organizationCRUD.deleteItem(deleteConfirm.id);
+      setDeleteConfirm({ isOpen: false, id: null, name: '', type: '' });
+      organizationCRUD.loadData();
     }
   };
 
@@ -265,6 +333,16 @@ function UserManagement() {
           >
             🎭 Quản lý vai trò
           </button>
+          <button
+            onClick={() => setActiveTab('organizations')}
+            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+              activeTab === 'organizations'
+                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            🏢 Quản lý doanh nghiệp
+          </button>
         </div>
 
         {/* Users Tab */}
@@ -275,15 +353,28 @@ function UserManagement() {
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Quản lý người dùng</h1>
                 <p className="text-gray-600">Tổng số: {filteredUsers.length} người dùng</p>
               </div>
-              <button
-                onClick={() => createUserModal.open()}
-                className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Thêm người dùng
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => userCRUD.loadData()}
+                  disabled={userCRUD.loading}
+                  className="px-5 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Làm mới dữ liệu"
+                >
+                  <svg className={`w-5 h-5 ${userCRUD.loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span className="hidden md:inline">Làm mới</span>
+                </button>
+                <button
+                  onClick={() => createUserModal.open()}
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Thêm người dùng
+                </button>
+              </div>
             </div>
 
             {/* Filters and Search */}
@@ -330,15 +421,28 @@ function UserManagement() {
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Quản lý vai trò</h1>
                 <p className="text-gray-600">Tổng số: {filteredRoles.length} vai trò</p>
               </div>
-              <button
-                onClick={() => createRoleModal.open()}
-                className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Thêm vai trò mới
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => roleCRUD.loadData()}
+                  disabled={roleCRUD.loading}
+                  className="px-5 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Làm mới dữ liệu"
+                >
+                  <svg className={`w-5 h-5 ${roleCRUD.loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span className="hidden md:inline">Làm mới</span>
+                </button>
+                <button
+                  onClick={() => createRoleModal.open()}
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Thêm vai trò mới
+                </button>
+              </div>
             </div>
 
             {/* Filters and Search */}
@@ -369,6 +473,131 @@ function UserManagement() {
               onDelete={(id, name) => setDeleteConfirm({ isOpen: true, id, name, type: 'role' })}
               isLoading={roleCRUD.loading}
             />
+          </>
+        )}
+
+        {/* Organizations Tab */}
+        {activeTab === 'organizations' && (
+          <>
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">Quản lý doanh nghiệp</h1>
+                <p className="text-gray-600">Tổng số: {filteredOrganizations.length} doanh nghiệp</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => organizationCRUD.loadData()}
+                  disabled={organizationCRUD.loading}
+                  className="px-5 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Làm mới dữ liệu"
+                >
+                  <svg className={`w-5 h-5 ${organizationCRUD.loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span className="hidden md:inline">Làm mới</span>
+                </button>
+                <button
+                  onClick={() => createOrgModal.open()}
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Thêm doanh nghiệp mới
+                </button>
+              </div>
+            </div>
+
+            {/* Filters and Search */}
+            <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
+              <div className="flex items-center gap-3 mb-3">
+                <FilterDropdown
+                  value={orgFilters.filters.status === 'all' ? 'all' : orgFilters.filters.status ? 'active' : 'inactive'}
+                  onChange={(val) => {
+                    if (val === 'all') orgFilters.setFilter('status', 'all');
+                    else if (val === 'active') orgFilters.setFilter('status', true);
+                    else orgFilters.setFilter('status', false);
+                  }}
+                  options={statusFilterOptions}
+                />
+              </div>
+              <SearchBar
+                value={orgSearchQuery}
+                onChange={setOrgSearchQuery}
+                placeholder="Tìm kiếm theo tên doanh nghiệp hoặc loại hình..."
+                onClear={() => setOrgSearchQuery('')}
+              />
+            </div>
+
+            {/* Organizations Table */}
+            {organizationCRUD.loading ? (
+              <Loading message="Đang tải danh sách doanh nghiệp..." />
+            ) : (
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-sm font-semibold">ID</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold">Tên doanh nghiệp</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold">Loại hình</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold">Trạng thái</th>
+                        <th className="px-6 py-4 text-center text-sm font-semibold">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {filteredOrganizations.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                            {orgSearchQuery ? 'Không tìm thấy doanh nghiệp nào' : 'Chưa có doanh nghiệp nào'}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredOrganizations.map((org) => (
+                          <tr key={org.organizationId} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4 text-sm text-gray-700 font-medium">{org.organizationId}</td>
+                            <td className="px-6 py-4">
+                              <p className="text-sm font-semibold text-gray-800">{org.organizationName || 'N/A'}</p>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-700">{org.type || 'Chưa cập nhật'}</td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
+                                org.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                              }`}>
+                                <span className={`w-2 h-2 rounded-full ${org.status ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                {org.status ? 'Hoạt động' : 'Không hoạt động'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center justify-center gap-2">
+                                <button
+                                  onClick={() => editOrgModal.open(org)}
+                                  className="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all text-sm font-semibold flex items-center gap-1"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                  Sửa
+                                </button>
+                                <button
+                                  onClick={() => setDeleteConfirm({ isOpen: true, id: org.organizationId, name: org.organizationName, type: 'organization' })}
+                                  className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all text-sm font-semibold flex items-center gap-1"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                  Xóa
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </>
         )}
       </main>
@@ -430,13 +659,215 @@ function UserManagement() {
         />
       </Modal>
 
+      {/* Organization Modals */}
+      <Modal
+        isOpen={createOrgModal.isOpen}
+        onClose={createOrgModal.close}
+        title="Thêm doanh nghiệp mới"
+        size="medium"
+      >
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          handleCreateOrganization({
+            organizationName: formData.get('organizationName'),
+            type: formData.get('type'),
+            adminFullName: formData.get('adminFullName'),
+            adminEmail: formData.get('adminEmail'),
+            adminPassword: formData.get('adminPassword')
+          });
+        }} className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Tên doanh nghiệp <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="organizationName"
+              required
+              className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500"
+              placeholder="Nhập tên doanh nghiệp"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Loại hình
+            </label>
+            <input
+              type="text"
+              name="type"
+              className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500"
+              placeholder="Ví dụ: Công ty TNHH, Công ty CP..."
+            />
+          </div>
+
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-bold text-gray-700 mb-3">Thông tin Admin</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Họ và tên Admin <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="adminFullName"
+                  required
+                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                  placeholder="Nhập họ tên"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email Admin <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="adminEmail"
+                  required
+                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                  placeholder="admin@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Mật khẩu Admin <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  name="adminPassword"
+                  required
+                  minLength="6"
+                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                  placeholder="Tối thiểu 6 ký tự"
+                />
+                <p className="text-xs text-gray-500 mt-1">Mật khẩu mặc định cho tài khoản admin của doanh nghiệp</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <button
+              type="button"
+              onClick={createOrgModal.close}
+              className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all shadow-lg"
+            >
+              Tạo doanh nghiệp
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={editOrgModal.isOpen}
+        onClose={editOrgModal.close}
+        title="Chỉnh sửa thông tin doanh nghiệp"
+        size="medium"
+      >
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          handleEditOrganization({
+            organizationName: formData.get('organizationName'),
+            type: formData.get('type'),
+            status: formData.get('status') === 'true'
+          });
+        }} className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Tên doanh nghiệp <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="organizationName"
+              required
+              defaultValue={editOrgModal.data?.organizationName || ''}
+              className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Loại hình
+            </label>
+            <input
+              type="text"
+              name="type"
+              defaultValue={editOrgModal.data?.type || ''}
+              className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Trạng thái
+            </label>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="status"
+                  value="true"
+                  defaultChecked={editOrgModal.data?.status !== false}
+                  className="w-4 h-4 text-indigo-600"
+                />
+                <span className="text-sm text-gray-700">Hoạt động</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="status"
+                  value="false"
+                  defaultChecked={editOrgModal.data?.status === false}
+                  className="w-4 h-4 text-indigo-600"
+                />
+                <span className="text-sm text-gray-700">Không hoạt động</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <button
+              type="button"
+              onClick={editOrgModal.close}
+              className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg"
+            >
+              Cập nhật
+            </button>
+          </div>
+        </form>
+      </Modal>
+
       {/* Delete Confirmation */}
       <ConfirmDialog
         isOpen={deleteConfirm.isOpen}
-        onConfirm={deleteConfirm.type === 'user' ? handleDeleteUser : handleDeleteRole}
+        onConfirm={
+          deleteConfirm.type === 'user' ? handleDeleteUser :
+          deleteConfirm.type === 'role' ? handleDeleteRole :
+          handleDeleteOrganization
+        }
         onCancel={() => setDeleteConfirm({ isOpen: false, id: null, name: '', type: '' })}
         title="Xác nhận xóa"
-        message={`Bạn có chắc chắn muốn xóa "${deleteConfirm.name}"?${deleteConfirm.type === 'user' ? '\n\nLưu ý: Đây là xóa mềm, người dùng sẽ bị vô hiệu hóa.' : ''}`}
+        message={`Bạn có chắc chắn muốn xóa "${deleteConfirm.name}"?\n\nLưu ý: Đây là xóa mềm, ${
+          deleteConfirm.type === 'user' ? 'người dùng' :
+          deleteConfirm.type === 'role' ? 'vai trò' :
+          'doanh nghiệp'
+        } sẽ bị vô hiệu hóa.`}
         confirmText="Xóa"
         cancelText="Hủy"
         type="danger"

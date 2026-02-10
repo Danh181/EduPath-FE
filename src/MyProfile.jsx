@@ -286,6 +286,18 @@ function MyProfile() {
                 <span className="hidden md:inline">Dashboard</span>
               </Link>
             )}
+            
+            {/* Organization Dashboard Button */}
+            {user?.role && user.role.toLowerCase() === 'organization' && (
+              <Link
+                to="/organization-dashboard"
+                className="px-4 md:px-6 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-orange-500 to-pink-600 text-white hover:from-orange-600 hover:to-pink-700 transition-all duration-300 no-underline shadow-md hover:shadow-lg flex items-center gap-2"
+              >
+                <span>🏢</span>
+                <span className="hidden md:inline">Organization Dashboard</span>
+              </Link>
+            )}
+            
             <button
               onClick={logout}
               className="px-4 md:px-6 py-2.5 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50 transition-all duration-300"

@@ -8,6 +8,7 @@ import MyProfile from './MyProfile'
 import Dashboard from './Dashboard'
 import UserManagement from './UserManagement'
 import UniversityManagement from './UniversityManagement'
+import OrganizationDashboard from './OrganizationDashboard'
 import ChatBox from './ChatBox'
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
         <Route path="/user-management" element={<UserManagement />} />
         <Route path="/users" element={<UserManagement />} />
         <Route path="/universities" element={<UniversityManagement />} />
+        <Route path="/organization-dashboard" element={<OrganizationDashboard />} />
       </Routes>
       <ChatBox />
     </Router>
