@@ -7,6 +7,7 @@ import { useSearch } from './hooks/useSearch';
 import { useCRUD } from './hooks/useCRUD';
 import {getAllUniversities, createUniversity, updateUniversity, deleteUniversity } from './services/universityService';
 import { getAllMajors, createMajor, updateMajor, deleteMajor } from './services/majorService';
+import { logout } from './services/authService';
 import { Modal, SearchBar, FilterDropdown, UserDropdown, Loading, ConfirmDialog } from './components/shared';
 import UniversityTable from './components/university/UniversityTable';
 import UniversityForm from './components/university/UniversityForm';

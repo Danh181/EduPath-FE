@@ -8,6 +8,7 @@ import { useCRUD } from './hooks/useCRUD';
 import { getAllUsers, deleteUser, createUser, updateUserProfile } from './services/userService';
 import { getAllRoles, createRole, updateRole, deleteRole } from './services/roleService';
 import { getAllOrganizations, createOrganizationAccount, updateOrganization, deleteOrganization } from './services/organizationService';
+import { logout } from './services/authService';
 import { Modal, SearchBar, FilterDropdown, UserDropdown, Loading, ConfirmDialog } from './components/shared';
 import UserTable from './components/user/UserTable';
 import UserForm from './components/user/UserForm';
