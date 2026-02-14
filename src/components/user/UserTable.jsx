@@ -4,7 +4,7 @@ import { EmptyState } from '../shared';
 /**
  * User Table Component
  */
-function UserTable({ users, onEdit, onDelete, isLoading }) {
+function UserTable({ users, onEdit, onDelete, isLoading, showOrganization = true }) {
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-12 flex items-center justify-center">
@@ -15,6 +15,8 @@ function UserTable({ users, onEdit, onDelete, isLoading }) {
       </div>
     );
   }
+
+  const columnCount = showOrganization ? 8 : 7;
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -27,6 +29,9 @@ function UserTable({ users, onEdit, onDelete, isLoading }) {
               <th className="px-6 py-4 text-left text-sm font-semibold">Email</th>
               <th className="px-6 py-4 text-left text-sm font-semibold">Ngày sinh</th>
               <th className="px-6 py-4 text-left text-sm font-semibold">Vai trò</th>
+              {showOrganization && (
+                <th className="px-6 py-4 text-left text-sm font-semibold">Doanh nghiệp</th>
+              )}
               <th className="px-6 py-4 text-left text-sm font-semibold">Trạng thái</th>
               <th className="px-6 py-4 text-center text-sm font-semibold">Thao tác</th>
             </tr>
@@ -34,7 +39,7 @@ function UserTable({ users, onEdit, onDelete, isLoading }) {
           <tbody className="divide-y divide-gray-200">
             {users.length === 0 ? (
               <tr>
-                <td colSpan="7" className="px-6 py-12">
+                <td colSpan={columnCount} className="px-6 py-12">
                   <EmptyState 
                     title="Không có người dùng nào"
                     message="Chưa có người dùng nào trong hệ thống"
@@ -67,6 +72,11 @@ function UserTable({ users, onEdit, onDelete, isLoading }) {
                       {user.role || 'User'}
                     </span>
                   </td>
+                  {showOrganization && (
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {user.organizationName || 'N/A'}
+                    </td>
+                  )}
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
                       user.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -116,13 +126,15 @@ UserTable.propTypes = {
       fullname: PropTypes.string,
       email: PropTypes.string,
       role: PropTypes.string,
+      organizationName: PropTypes.string,
       DateOfBirth: PropTypes.string,
       isActive: PropTypes.bool
     })
   ).isRequired,
   onEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
-  isLoading: PropTypes.bool
+  isLoading: PropTypes.bool,
+  showOrganization: PropTypes.bool
 };
 
 export default UserTable;
