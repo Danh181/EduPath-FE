@@ -152,3 +152,29 @@ export const getUsersByOrganization = async () => {
     };
   }
 };
+
+// Import users from Excel file (for Organization role)
+export const importUsers = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post('/api/User/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
+    return {
+      success: true,
+      message: response.data.message || 'Import completed successfully',
+      data: response.data.data || response.data
+    };
+  } catch (error) {
+    console.error('Import users error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to import users'
+    };
+  }
+};

@@ -5,7 +5,7 @@ import { useToast } from './hooks/useToast';
 import { useModal } from './hooks/useModal';
 import { useMultiFilter } from './hooks/useSearch';
 import { useCRUD } from './hooks/useCRUD';
-import { getUsersByOrganization, deleteUser, createUser, updateUserProfile } from './services/userService';
+import { getUsersByOrganization, deleteUser, createUser, updateUserProfile, importUsers } from './services/userService';
 import { getAllRoles } from './services/roleService';
 import { logout } from './services/authService';
 import { Modal, SearchBar, FilterDropdown, UserDropdown, Loading, ConfirmDialog } from './components/shared';
@@ -32,6 +32,12 @@ function OrganizationDashboard() {
   // Modals
   const createUserModal = useModal();
   const editUserModal = useModal();
+  const importModal = useModal();
+  
+  // Import state
+  const [importFile, setImportFile] = useState(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
 
   // Users CRUD (using organization-specific endpoint)
   const userCRUD = useCRUD({
@@ -153,6 +159,34 @@ function OrganizationDashboard() {
     }
   };
 
+  const handleImportUsers = async () => {
+    if (!importFile) {
+      showError('Vui lòng chọn file Excel để import');
+      return;
+    }
+
+    setIsImporting(true);
+    setImportResult(null);
+
+    const result = await importUsers(importFile);
+    
+    setIsImporting(false);
+    setImportResult(result);
+
+    if (result.success) {
+      showSuccess(result.message);
+      userCRUD.loadData();
+    } else {
+      showError(result.message);
+    }
+  };
+
+  const handleCloseImportModal = () => {
+    importModal.close();
+    setImportFile(null);
+    setImportResult(null);
+  };
+
   const handleLogout = () => {
     logout(); // This will immediately redirect to /login
   };
@@ -245,6 +279,15 @@ function OrganizationDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               <span className="hidden md:inline">Làm mới</span>
+            </button>
+            <button
+              onClick={() => importModal.open()}
+              className="px-5 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <span className="hidden md:inline">Import file</span>
             </button>
             <button
               onClick={() => createUserModal.open()}
@@ -481,6 +524,122 @@ function OrganizationDashboard() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Import Users Modal */}
+      <Modal
+        isOpen={importModal.isOpen}
+        onClose={handleCloseImportModal}
+        title="Import người dùng từ file Excel"
+        size="large"
+      >
+        <div className="space-y-6">
+          {/* Instructions */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-blue-900 mb-2">📋 Hướng dẫn:</h3>
+            <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+              <li>File Excel phải có định dạng .xlsx</li>
+              <li><strong>Cột 1:</strong> Họ và tên</li>
+              <li><strong>Cột 2:</strong> Email (bắt buộc)</li>
+              <li><strong>Cột 3:</strong> Mật khẩu</li>
+              <li><strong>Cột 4:</strong> Ngày sinh (định dạng: DD/MM/YYYY)</li>
+              <li><strong>Cột 5:</strong> Trạng thái (1/true hoặc 0/false)</li>
+              <li>Tất cả người dùng sẽ được tạo với vai trò <strong>User</strong></li>
+              <li>Người dùng sẽ tự động được gán vào tổ chức của bạn</li>
+            </ul>
+          </div>
+
+          {/* File Upload */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Chọn file Excel <span className="text-red-500">*</span>
+            </label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors">
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={(e) => setImportFile(e.target.files[0])}
+                className="hidden"
+                id="import-file-input"
+              />
+              <label htmlFor="import-file-input" className="cursor-pointer">
+                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p className="mt-2 text-sm text-gray-600">
+                  {importFile ? importFile.name : 'Click để chọn file Excel'}
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Chỉ chấp nhận file .xlsx hoặc .xls
+                </p>
+              </label>
+            </div>
+          </div>
+
+          {/* Import Result */}
+          {importResult && (
+            <div className={`border rounded-lg p-4 ${
+              importResult.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+            }`}>
+              <h3 className={`text-sm font-semibold mb-2 ${
+                importResult.success ? 'text-green-900' : 'text-red-900'
+              }`}>
+                {importResult.success ? '✅ Import thành công!' : '❌ Import thất bại'}
+              </h3>
+              <p className={`text-sm ${
+                importResult.success ? 'text-green-800' : 'text-red-800'
+              }`}>
+                {importResult.message}
+              </p>
+              
+              {/* Error Details */}
+              {importResult.data && Array.isArray(importResult.data) && importResult.data.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-sm font-semibold text-red-900 mb-1">Chi tiết lỗi:</p>
+                  <div className="bg-white rounded border border-red-200 p-3 max-h-48 overflow-y-auto">
+                    {importResult.data.map((error, index) => (
+                      <p key={index} className="text-xs text-red-700 mb-1">• {error}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <button
+              type="button"
+              onClick={handleCloseImportModal}
+              className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+              disabled={isImporting}
+            >
+              {importResult ? 'Đóng' : 'Hủy'}
+            </button>
+            {!importResult && (
+              <button
+                type="button"
+                onClick={handleImportUsers}
+                disabled={!importFile || isImporting}
+                className="px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isImporting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Đang import...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span>Import</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
       </Modal>
 
       {/* Delete Confirmation */}
