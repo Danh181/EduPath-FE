@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth';
 import { useToast } from './hooks/useToast';
 import { getAllUsers } from './services/userService';
 import { getAllUniversities } from './services/universityService';
+import { getAllPersonalTraits } from './services/personalTraitService';
 import { logout } from './services/authService';
 import { UserDropdown, Loading } from './components/shared';
 import Toast from './components/Toast';
@@ -12,6 +13,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalUniversities, setTotalUniversities] = useState(0);
+  const [totalPersonalTraits, setTotalPersonalTraits] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
 
@@ -39,7 +41,7 @@ function Dashboard() {
 
   const loadData = async () => {
     setDataLoading(true);
-    await Promise.all([loadTotalUsers(), loadTotalUniversities()]);
+    await Promise.all([loadTotalUsers(), loadTotalUniversities(), loadTotalPersonalTraits()]);
     setDataLoading(false);
   };
 
@@ -65,6 +67,17 @@ function Dashboard() {
       }
     } catch (error) {
       console.error('Error loading universities:', error);
+    }
+  };
+
+  const loadTotalPersonalTraits = async () => {
+    try {
+      const result = await getAllPersonalTraits();
+      if (result.success && result.traits) {
+        setTotalPersonalTraits(result.traits.length);
+      }
+    } catch (error) {
+      console.error('Error loading personal traits:', error);
     }
   };
 
@@ -150,6 +163,27 @@ function Dashboard() {
             </div>
             <h3 className="text-3xl font-bold text-gray-800 mb-1">{totalUniversities}</h3>
             <p className="text-gray-600 font-medium">Trường đại học</p>
+            <p className="text-xs text-indigo-600 font-semibold mt-2 flex items-center gap-1">
+              <span>Xem chi tiết</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </p>
+          </Link>
+
+          {/* Total Personal Traits Card */}
+          <Link 
+            to="/personal-traits"
+            className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:transform hover:-translate-y-1 no-underline cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-pink-600 rounded-xl flex items-center justify-center text-white text-2xl shadow-lg">
+                🧠
+              </div>
+              <span className="text-sm font-semibold text-gray-500 uppercase">Tổng số</span>
+            </div>
+            <h3 className="text-3xl font-bold text-gray-800 mb-1">{totalPersonalTraits}</h3>
+            <p className="text-gray-600 font-medium">Tính cách</p>
             <p className="text-xs text-indigo-600 font-semibold mt-2 flex items-center gap-1">
               <span>Xem chi tiết</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
