@@ -1,10 +1,15 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { isAuthenticated, getCurrentUser, logout } from './services/authService';
+import { getLatestNews } from './services/newsService';
+import NewsCard from './components/News/NewsCard';
+import NewsSkeleton from './components/News/NewsSkeleton';
 
 function HomePage() {
   const [user, setUser] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [latestNews, setLatestNews] = useState([]);
+  const [loadingNews, setLoadingNews] = useState(true);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -13,6 +18,20 @@ function HomePage() {
       const currentUser = getCurrentUser();
       setUser(currentUser);
     }
+
+    // Fetch latest news
+    const fetchNews = async () => {
+      try {
+        const data = await getLatestNews(3);
+        setLatestNews(data);
+      } catch (error) {
+        console.error("Failed to fetch news", error);
+      } finally {
+        setLoadingNews(false);
+      }
+    };
+
+    fetchNews();
   }, []);
 
   // Close dropdown when clicking outside
@@ -42,18 +61,22 @@ function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
+    <div className="min-h-screen bg-gray-50 font-sans">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm z-50">
-        <div className="max-w-full mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
+      <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2 no-underline">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
+            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xl">E</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">EduPath</span>
+            <span className="text-2xl font-bold text-gray-900 tracking-tight">Edu<span className="text-red-600">Path</span></span>
           </Link>
+
+          <div className="hidden md:flex items-center gap-8 mx-auto">
+            <Link to="/" className="text-gray-700 hover:text-red-600 font-medium transition-colors no-underline">Trang chủ</Link>
+            <Link to="/pricing" className="text-gray-700 hover:text-red-600 font-medium transition-colors no-underline">Bảng giá</Link>
+            <a href="#about-us" className="text-gray-700 hover:text-red-600 font-medium transition-colors no-underline">Về chúng tôi</a>
+          </div>
 
           {/* User logged in - show profile */}
           {user ? (
@@ -66,36 +89,36 @@ function HomePage() {
                   <span className="text-sm font-semibold text-gray-900">{user.fullname || user.email}</span>
                   <span className="text-xs text-gray-500">{user.email}</span>
                 </div>
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-bold text-lg border border-red-200">
                   {getInitials(user.fullname || user.email)}
                 </div>
               </button>
 
               {/* Dropdown Menu */}
               {showDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 animate-fadeIn">
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 animate-fadeIn z-50">
                   <div className="px-4 py-3 border-b border-gray-100">
                     <p className="text-sm font-semibold text-gray-900">{user.fullname || 'User'}</p>
                     <p className="text-xs text-gray-500 truncate">{user.email}</p>
                   </div>
-                  
+
                   <Link
                     to="/profile"
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-indigo-50 transition-colors no-underline"
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors no-underline"
                     onClick={() => setShowDropdown(false)}
                   >
-                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     <span>Thông tin cá nhân</span>
                   </Link>
-                  
+
                   <Link
                     to="/quiz"
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 transition-colors no-underline"
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors no-underline"
                     onClick={() => setShowDropdown(false)}
                   >
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                     </svg>
                     <span>Làm bài trắc nghiệm</span>
@@ -115,18 +138,18 @@ function HomePage() {
             </div>
           ) : (
             /* Not logged in - show login/register buttons */
-            <div className="flex gap-2 md:gap-3">
-              <Link 
-                to="/login" 
-                className="px-4 md:px-6 py-2.5 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-all duration-300 no-underline"
+            <div className="flex gap-3">
+              <Link
+                to="/login"
+                className="px-5 py-2.5 rounded-md text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-all border border-transparent hover:border-gray-300 no-underline"
               >
                 Đăng nhập
               </Link>
-              <Link 
-                to="/register" 
-                className="px-4 md:px-6 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:shadow-lg transition-all duration-300 no-underline"
+              <Link
+                to="/register"
+                className="px-5 py-2.5 rounded-md text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-all shadow-sm hover:shadow-md no-underline"
               >
-                Đăng ký ngay
+                Đăng ký miễn phí
               </Link>
             </div>
           )}
@@ -134,220 +157,461 @@ function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <div className="flex justify-center mb-8">
-            <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-medium">
-              <span>🔧</span>
-              Công cụ định hướng nghề nghiệp thông minh
+      <section className="pt-32 pb-20 px-6 bg-white">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-12">
+          {/* ... Hero Content ... */}
+          <div className="md:w-1/2 text-left">
+            <div className="inline-flex items-center gap-2 bg-red-50 text-red-700 px-4 py-1.5 rounded-full text-sm font-bold mb-6 border border-red-100">
+              <span className="w-2 h-2 bg-red-600 rounded-full"></span>
+              Định hướng nghề nghiệp 4.0
+            </div>
+
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 text-gray-900 leading-tight">
+              Khám Phá <span className="text-red-600">Tương Lai</span> <br />
+              Của Chính Bạn
+            </h1>
+
+            <p className="text-xl text-gray-600 mb-8 max-w-lg leading-relaxed">
+              EduPath sử dụng AI để phân tích tính cách và năng lực từ bài kiểm tra trắc nghiệm, giúp bạn tìm ra con đường học vấn và nghề nghiệp phù hợp nhất.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link
+                to="/quiz"
+                className="inline-flex justify-center items-center gap-2 px-8 py-4 bg-red-600 text-white rounded-md text-lg font-bold hover:bg-red-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 no-underline"
+              >
+                Làm Trắc Nghiệm Ngay
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+              <a
+                href="#how-it-works"
+                className="inline-flex justify-center items-center gap-2 px-8 py-4 bg-white text-gray-700 border border-gray-300 rounded-md text-lg font-bold hover:bg-gray-50 transition-all no-underline"
+              >
+                Tìm hiểu thêm
+              </a>
+            </div>
+
+            <div className="mt-8 flex items-center gap-4 text-sm text-gray-500">
+              <div className="flex -space-x-2">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className={`w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center overflow-hidden`}>
+                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`} alt="user" />
+                  </div>
+                ))}
+              </div>
+              <p>Được tin dùng bởi <span className="font-bold text-gray-900">10,000+</span> học sinh</p>
             </div>
           </div>
-          
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight px-4">
-            Tìm Con Đường Học Vấn Phù Hợp Với Bạn
-          </h1>
-          
-          <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto px-4">
-            Khám phá ngành học và lộ trình nghề nghiệp phù hợp nhất với tính cách, sở thích và năng lực của bạn
-          </p>
 
-          <div className="flex flex-col items-center gap-4">
-            <Link 
-              to="/quiz"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-lg font-bold hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 no-underline"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Bắt đầu trắc nghiệm
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
-            <p className="text-sm text-gray-500">
-              ✨ Hoàn toàn miễn phí • Chỉ mất 5 phút
-            </p>
+          <div className="md:w-1/2 relative">
+            <div className="absolute -top-10 -right-10 w-72 h-72 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+            <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-red-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+            <div className="relative bg-gradient-to-br from-gray-100 to-white rounded-2xl shadow-2xl p-6 border border-gray-100">
+              {/* Abstract UI Representation */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+                <div className="flex gap-2 mb-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                </div>
+                <div className="h-4 bg-gray-100 rounded w-3/4 mb-2"></div>
+                <div className="h-32 bg-gray-50 rounded mb-2 flex items-center justify-center text-gray-300">
+                  AI Analysis Visualization
+                </div>
+                <div className="flex justify-between items-center mt-4">
+                  <div className="flex gap-2">
+                    <div className="h-8 w-20 bg-emerald-100 rounded text-emerald-700 text-xs flex items-center justify-center font-bold">Phù hợp 98%</div>
+                    <div className="h-8 w-20 bg-blue-100 rounded text-blue-700 text-xs flex items-center justify-center font-bold">CNTT</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 px-6 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16 px-4">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Tính Năng Nổi Bật</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Hệ thống hỗ trợ toàn diện giúp bạn đưa ra quyết định sáng suốt về tương lai
-            </p>
+      {/* Latest Admissions News Section */}
+      <section className="py-20 px-6 bg-gray-50 border-t border-gray-100 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-50 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 text-red-600 font-bold uppercase tracking-wider text-xs mb-2">
+                <span className="w-8 h-0.5 bg-red-600"></span>
+                Tin Tức Mới
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Thông Tin Tuyển Sinh & Hướng Nghiệp</h2>
+            </div>
+            <Link to="/news" className="text-red-600 font-bold hover:text-red-700 flex items-center gap-1 group no-underline">
+              Xem tất cả tin tức <span className="text-xl transform group-hover:translate-x-1 transition-transform">→</span>
+            </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {/* Feature 1 */}
-            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-8 rounded-2xl hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-              <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Trắc Nghiệm Tính Cách</h3>
-              <p className="text-gray-600">
-                Đánh giá chính xác ưu điểm, sở thích và phong cách làm việc của bạn qua bài test khoa học
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="bg-gradient-to-br from-pink-50 to-purple-50 p-8 rounded-2xl hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Gợi Ý Ngành Học</h3>
-              <p className="text-gray-600">
-                Nhận danh sách các ngành học phù hợp kèm chuyên ngành cụ thể và thông tin trường đại học
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-8 rounded-2xl hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Lộ Trình Nghề Nghiệp</h3>
-              <p className="text-gray-600">
-                Xem chi tiết lộ trình học tập 4 năm và các kỹ năng cần thiết để thành công
-              </p>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Điểm Chuẩn</h3>
-              <p className="text-gray-600">
-                Tra cứu điểm chuẩn qua các năm của các trường đại học để định hướng mục tiêu học tập
-              </p>
-            </div>
-
-            {/* Feature 5 */}
-            <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-8 rounded-2xl hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-              <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Lưu Lựa Chọn</h3>
-              <p className="text-gray-600">
-                Bookmark các trường và ngành quan tâm để so sánh và đưa ra quyết định tốt nhất
-              </p>
-            </div>
-
-            {/* Feature 6 */}
-            <div className="bg-gradient-to-br from-pink-50 to-rose-50 p-8 rounded-2xl hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-              <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl flex items-center justify-center mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Kỹ Năng & Chứng Chỉ</h3>
-              <p className="text-gray-600">
-                Biết được những kỹ năng, chứng chỉ và ngoại ngữ cần bổ sung cho từng ngành
-              </p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {loadingNews ? (
+              // Show skeletons while loading
+              Array(3).fill(0).map((_, idx) => <NewsSkeleton key={idx} />)
+            ) : (
+              // Show dynamic news cards
+              latestNews.map(item => (
+                <NewsCard key={item.id} news={item} />
+              ))
+            )}
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="py-20 px-6 bg-gradient-to-b from-purple-50 to-white">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16 px-4">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Cách Thức Hoạt Động</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Chỉ 3 bước đơn giản để tìm ra con đường phù hợp
+      <section id="how-it-works" className="py-20 px-6 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Quy Trình Hoạt Động Của EduPath</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Hệ thống AI phân tích dựa trên dữ liệu hàng nghìn sinh viên để đưa ra gợi ý chính xác nhất.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-lg border-2 border-purple-100 hover:border-purple-300 transition-all duration-300">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold mb-6">
-                1
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {[
+              {
+                step: "01",
+                title: "Trắc nghiệm",
+                desc: "Thực hiện bài kiểm tra tính cách & năng lực chuyên sâu.",
+                icon: "📝"
+              },
+              {
+                step: "02",
+                title: "Phân tích AI",
+                desc: "Hệ thống so sánh hồ sơ của bạn với 500+ ngành nghề.",
+                icon: "🤖"
+              },
+              {
+                step: "03",
+                title: "Gợi ý lộ trình",
+                desc: "Nhận danh sách ngành học và trường phù hợp nhất.",
+                icon: "🎯"
+              },
+              {
+                step: "04",
+                title: "Kế hoạch hành động",
+                desc: "Xây dựng các bước cụ thể để đạt được mục tiêu.",
+                icon: "🚀"
+              }
+            ].map((item, idx) => (
+              <div key={idx} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-10 font-bold text-6xl text-gray-300 group-hover:text-red-100 transition-colors">
+                  {item.step}
+                </div>
+                <div className="w-12 h-12 bg-red-50 text-red-600 rounded-lg flex items-center justify-center text-2xl mb-4 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                  {item.icon}
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{item.desc}</p>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Làm bài trắc nghiệm</h3>
-              <p className="text-gray-600">
-                Trả lời 24 câu hỏi để chúng tôi hiểu rõ về tính cách, sở thích và năng lực của bạn
-              </p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Career Showcase */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Ngành Nghề Xu Hướng 2026</h2>
+              <p className="text-lg text-gray-600">Khám phá các lựa chọn nghề nghiệp có nhu cầu cao.</p>
+            </div>
+            <Link to="/quiz" className="text-red-600 font-bold hover:text-red-700 flex items-center gap-1 no-underline">
+              Xem tất cả ngành nghề <span className="text-xl">→</span>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Card 1 */}
+            <div className="group rounded-xl overflow-hidden border border-gray-200 hover:shadow-xl transition-all cursor-pointer">
+              <div className="h-48 bg-gray-200 relative">
+                <img src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Code" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute bottom-4 left-4 bg-white/90 px-3 py-1 rounded text-xs font-bold text-gray-800 backdrop-blur-sm">CÔNG NGHỆ</div>
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-red-600 transition-colors">Kỹ sư phần mềm</h3>
+                <p className="text-gray-500 text-sm mb-4 line-clamp-2">Thiết kế và xây dựng các ứng dụng, hệ thống phần mềm giải quyết vấn đề thực tế.</p>
+
+                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                  <span className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    Lương cao
+                  </span>
+                  <span className="text-xs text-gray-400">4-5 năm đào tạo</span>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-lg border-2 border-pink-100 hover:border-pink-300 transition-all duration-300">
-              <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold mb-6">
-                2
+            {/* Card 2 */}
+            <div className="group rounded-xl overflow-hidden border border-gray-200 hover:shadow-xl transition-all cursor-pointer">
+              <div className="h-48 bg-gray-200 relative">
+                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Data" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute bottom-4 left-4 bg-white/90 px-3 py-1 rounded text-xs font-bold text-gray-800 backdrop-blur-sm">KINH TẾ</div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Nhận gợi ý ngành học</h3>
-              <p className="text-gray-600">
-                Hệ thống phân tích và đề xuất các ngành học phù hợp nhất với bạn kèm độ khớp
-              </p>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-red-600 transition-colors">Phân tích dữ liệu</h3>
+                <p className="text-gray-500 text-sm mb-4 line-clamp-2">Biến dữ liệu thô thành thông tin có giá trị để hỗ trợ ra quyết định kinh doanh.</p>
+
+                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                  <span className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                    Nhu cầu tăng
+                  </span>
+                  <span className="text-xs text-gray-400">3.5-4 năm đào tạo</span>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-lg border-2 border-rose-100 hover:border-rose-300 transition-all duration-300">
-              <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold mb-6">
-                3
+            {/* Card 3 */}
+            <div className="group rounded-xl overflow-hidden border border-gray-200 hover:shadow-xl transition-all cursor-pointer">
+              <div className="h-48 bg-gray-200 relative">
+                <img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Design" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute bottom-4 left-4 bg-white/90 px-3 py-1 rounded text-xs font-bold text-gray-800 backdrop-blur-sm">SÁNG TẠO</div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Khám phá chi tiết</h3>
-              <p className="text-gray-600">
-                Xem thông tin trường, điểm chuẩn, lộ trình nghề nghiệp và bookmark lựa chọn yêu thích
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-red-600 transition-colors">UX/UI Designer</h3>
+                <p className="text-gray-500 text-sm mb-4 line-clamp-2">Tạo ra những trải nghiệm số trực quan, dễ sử dụng và đẹp mắt cho người dùng.</p>
+
+                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                  <span className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                    Linh hoạt
+                  </span>
+                  <span className="text-xs text-gray-400">Self-taught / Khóa học</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust & Stats */}
+      <section className="py-16 bg-red-600 text-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-red-500/50">
+            <div className="p-4">
+              <div className="text-4xl md:text-5xl font-extrabold mb-2">50k+</div>
+              <div className="text-red-100 font-medium text-sm">Người dùng active</div>
+            </div>
+            <div className="p-4">
+              <div className="text-4xl md:text-5xl font-extrabold mb-2">120+</div>
+              <div className="text-red-100 font-medium text-sm">Trường đại học LK</div>
+            </div>
+            <div className="p-4">
+              <div className="text-4xl md:text-5xl font-extrabold mb-2">95%</div>
+              <div className="text-red-100 font-medium text-sm">Độ chính xác AI</div>
+            </div>
+            <div className="p-4">
+              <div className="text-4xl md:text-5xl font-extrabold mb-2">24/7</div>
+              <div className="text-red-100 font-medium text-sm">Hỗ trợ tư vấn</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-20 px-6 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-16">Câu Chuyện Thành Công</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                name: "Nguyễn Văn A",
+                role: "Sinh viên ĐH Bách Khoa",
+                content: "Nhờ EduPath, mình đã nhận ra đam mê với Khoa học dữ liệu thay vì Kinh tế như dự định ban đầu. Lộ trình học tập rất rõ ràng!",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+              },
+              {
+                name: "Trần Thị B",
+                role: "Fresher Marketing",
+                content: "Bài trắc nghiệm tính cách cực kỳ chính xác. Mình đã tìm được môi trường làm việc phù hợp với tính cách hướng ngoại của mình.",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka"
+              },
+              {
+                name: "Lê Văn C",
+                role: "Học sinh THPT",
+                content: "Bố mẹ mình đã yên tâm hơn rất nhiều khi thấy kết quả phân tích chi tiết từ EduPath. Cảm ơn đội ngũ phát triển!",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Bob"
+              }
+            ].map((item, idx) => (
+              <div key={idx} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all">
+                <div className="flex items-center gap-4 mb-6">
+                  <img src={item.avatar} alt={item.name} className="w-12 h-12 rounded-full bg-gray-100" />
+                  <div>
+                    <h4 className="font-bold text-gray-900">{item.name}</h4>
+                    <p className="text-sm text-gray-500">{item.role}</p>
+                  </div>
+                </div>
+                <div className="flex text-yellow-400 mb-4">
+                  {'★'.repeat(5)}
+                </div>
+                <p className="text-gray-600 italic">"{item.content}"</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">Câu Hỏi Thường Gặp</h2>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "Bài trắc nghiệm của EduPath có chính xác không?",
+                a: "EduPath sử dụng mô hình AI được huấn luyện trên dữ liệu của hàng nghìn sinh viên và chuyên gia, kết hợp với các lý thuyết tâm lý học uy tín (MBTI, Holland) để đảm bảo độ chính xác cao nhất."
+              },
+              {
+                q: "Tôi có mất phí khi sử dụng không?",
+                a: "Bạn có thể làm bài trắc nghiệm và nhận kết quả cơ bản hoàn toàn miễn phí. Gói chuyên sâu với lộ trình chi tiết sẽ có một khoản phí nhỏ để duy trì hệ thống."
+              },
+              {
+                q: "Kết quả có được bảo mật không?",
+                a: "Tuyệt đối. EduPath cam kết bảo mật thông tin cá nhân và kết quả trắc nghiệm của bạn theo tiêu chuẩn an toàn dữ liệu quốc tế."
+              },
+              {
+                q: "Tôi có thể làm lại bài trắc nghiệm không?",
+                a: "Có, bạn có thể làm lại bài trắc nghiệm bất cứ lúc nào để cập nhật sự thay đổi trong định hướng và sở thích của mình."
+              }
+            ].map((item, idx) => (
+              <details key={idx} className="group bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
+                <summary className="flex justify-between items-center font-medium cursor-pointer list-none p-6 text-gray-900 hover:bg-gray-100 transition-colors">
+                  <span>{item.q}</span>
+                  <span className="transition group-open:rotate-180">
+                    <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                  </span>
+                </summary>
+                <div className="text-gray-600 p-6 pt-0 leading-relaxed border-t border-gray-100/50">
+                  {item.a}
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* About Us Section */}
+      <section id="about-us" className="py-20 px-6 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="h-1 w-12 bg-red-600 rounded-full"></span>
+                <span className="text-red-600 font-bold uppercase tracking-wider text-sm">Về chúng tôi</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Sứ mệnh đồng hành cùng thế hệ trẻ Việt Nam</h2>
+              <p className="text-gray-600 text-lg leading-relaxed mb-6">
+                EduPath được thành lập với niềm tin rằng mỗi cá nhân đều có một tài năng riêng biệt. Nhiệm vụ của chúng tôi là giúp bạn khám phá và phát huy tiềm năng đó thông qua công nghệ và dữ liệu giáo dục.
               </p>
+              <p className="text-gray-600 text-lg leading-relaxed mb-8">
+                Đội ngũ của chúng tôi bao gồm các chuyên gia giáo dục, kỹ sư AI và những người đam mê định hướng nghề nghiệp, cùng chung tay xây dựng một nền tảng hữu ích cho cộng đồng.
+              </p>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-4xl font-bold text-gray-900 mb-1">50K+</h4>
+                  <p className="text-sm text-gray-500">Người dùng</p>
+                </div>
+                <div>
+                  <h4 className="text-4xl font-bold text-gray-900 mb-1">200+</h4>
+                  <p className="text-sm text-gray-500">Đối tác trường học</p>
+                </div>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-tr from-red-600 to-emerald-600 rounded-3xl transform rotate-3 opacity-20"></div>
+              <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="About Team" className="relative rounded-3xl shadow-xl w-full object-cover h-96" />
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 rounded-3xl p-12 md:p-16 text-center text-white shadow-2xl">
-            <div className="flex justify-center mb-6">
-              <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-            </div>
-            <h2 className="text-4xl font-bold mb-4">Sẵn Sàng Tìm Con Đường Của Bạn?</h2>
-            <p className="text-xl mb-8 opacity-90">
-              Chỉ mất 5 phút để khám phá ngành học và nghề nghiệp phù hợp với bạn
-            </p>
-            <Link 
+      <section className="py-20 px-6 bg-gray-900 text-white overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-red-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <h2 className="text-4xl font-bold mb-6">Đừng Để Tương Lai Là Một Ẩn Số</h2>
+          <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+            Hơn 50,000 bạn trẻ đã tìm được hướng đi đúng đắn nhờ EduPath. Bạn đã sẵn sàng chưa?
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
               to="/quiz"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-600 rounded-xl text-lg font-bold hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-1 no-underline"
+              className="px-10 py-4 bg-red-600 text-white rounded-md text-lg font-bold hover:bg-red-700 transition-all shadow-lg hover:shadow-red-900/30 no-underline"
             >
-              Bắt đầu ngay
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
+              Bắt đầu ngay hôm nay
+            </Link>
+            <Link
+              to="/register"
+              className="px-10 py-4 bg-transparent border border-gray-600 text-white rounded-md text-lg font-bold hover:bg-gray-800 transition-all no-underline"
+            >
+              Tạo tài khoản miễn phí
             </Link>
           </div>
+          <p className="mt-6 text-sm text-gray-500">
+            Không yêu cầu thẻ tín dụng. Hủy bất kỳ lúc nào.
+          </p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200 py-8 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            </div>
-            <span className="font-bold text-gray-900">EduPath Finder</span>
+      <footer className="bg-white border-t border-gray-200 py-12 px-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div className="col-span-1 md:col-span-1">
+            <Link to="/" className="flex items-center gap-2 mb-4 no-underline">
+              <div className="w-8 h-8 bg-red-600 rounded-md flex items-center justify-center text-white font-bold">E</div>
+              <span className="text-xl font-bold text-gray-900">Edu<span className="text-red-600">Path</span></span>
+            </Link>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              Nền tảng định hướng nghề nghiệp hàng đầu dành cho học sinh, sinh viên Việt Nam.
+            </p>
           </div>
-          <p className="text-sm text-gray-600">
-            © 2025 EduPath Finder - Định hướng tương lai, khám phá bản thân
-          </p>
+
+          <div>
+            <h4 className="font-bold text-gray-900 mb-4">Khám phá</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li><a href="#" className="hover:text-red-600 transition-colors">Về chúng tôi</a></li>
+              <li><a href="#" className="hover:text-red-600 transition-colors">Các khoá học</a></li>
+              <li><a href="#" className="hover:text-red-600 transition-colors">Sự kiện</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-bold text-gray-900 mb-4">Cộng đồng</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li><a href="#" className="hover:text-red-600 transition-colors">Blog</a></li>
+              <li><a href="#" className="hover:text-red-600 transition-colors">Diễn đàn</a></li>
+              <li><a href="#" className="hover:text-red-600 transition-colors">Đối tác</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-bold text-gray-900 mb-4">Liên hệ</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>contact@edupath.vn</li>
+              <li>+84 123 456 789</li>
+              <li>Hà Nội, Việt Nam</li>
+            </ul>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+          <p>© 2025 EduPath Inc. All rights reserved.</p>
+          <div className="flex gap-4">
+            <a href="#" className="hover:text-gray-900">Điều khoản</a>
+            <a href="#" className="hover:text-gray-900">Bảo mật</a>
+          </div>
         </div>
       </footer>
     </div>

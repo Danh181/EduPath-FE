@@ -50,11 +50,11 @@ function RegisterForm() {
           const today = new Date();
           let age = today.getFullYear() - birthDate.getFullYear();
           const monthDiff = today.getMonth() - birthDate.getMonth();
-          
+
           if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
             age--;
           }
-          
+
           if (birthDate > today) {
             error = 'Ngày sinh không được là ngày trong tương lai';
           } else if (age < 13) {
@@ -196,210 +196,234 @@ function RegisterForm() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center p-5 bg-gradient-to-br from-indigo-500 to-purple-600 relative">
-      {/* Logo button */}
-      <Link 
-        to="/" 
-        className="absolute top-6 left-6 text-white text-2xl font-bold no-underline transition-all duration-300 hover:opacity-70 z-50"
-      >
-        EduPath
-      </Link>
-      <div className="bg-white rounded-2xl p-10 w-full max-w-lg shadow-2xl">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">Đăng ký tài khoản</h2>
-        <p className="text-gray-600 text-center mb-8 text-sm">Tạo tài khoản để khám phá ngành học phù hợp với bạn</p>
-        
-        <form onSubmit={handleSubmit} noValidate>
-          {/* Họ Tên */}
-          <div className="mb-6">
-            <label htmlFor="fullname" className="block mb-2 text-gray-700 font-semibold text-sm">
-              Họ và tên <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="text"
-              id="fullname"
-              name="fullname"
-              value={formData.fullname}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`w-full px-4 py-3 border-2 rounded-lg text-sm transition-all duration-300 ${
-                errors.fullname && touched.fullname 
-                  ? 'border-red-600 focus:ring-red-100' 
-                  : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-100'
-              } focus:outline-none focus:ring-4`}
-              placeholder="Nguyễn Văn A"
-            />
-            {errors.fullname && touched.fullname && (
-              <span className="block text-red-600 text-xs mt-1.5 font-medium">{errors.fullname}</span>
-            )}
-          </div>
+    <>
+      <div className="fixed inset-0 bg-gray-50" />
 
-          {/* Email */}
-          <div className="mb-6">
-            <label htmlFor="email" className="block mb-2 text-gray-700 font-semibold text-sm">
-              Email <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`w-full px-4 py-3 border-2 rounded-lg text-sm transition-all duration-300 ${
-                errors.email && touched.email 
-                  ? 'border-red-600 focus:ring-red-100' 
-                  : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-100'
-              } focus:outline-none focus:ring-4`}
-              placeholder="example@email.com"
-            />
-            {errors.email && touched.email && (
-              <span className="block text-red-600 text-xs mt-1.5 font-medium">{errors.email}</span>
-            )}
-          </div>
+      <div className="relative min-h-screen flex flex-col lg:flex-row">
+        {/* Left Side - Image/Content (Swapped) */}
+        <div className="hidden lg:flex lg:w-1/2 bg-gray-900 relative overflow-hidden items-center justify-center p-12 order-last lg:order-first">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black opacity-90"></div>
+          {/* Decorative Blobs */}
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse animation-delay-2000"></div>
 
-          {/* Ngày sinh */}
-          <div className="mb-6">
-            <label htmlFor="dateOfBirth" className="block mb-2 text-gray-700 font-semibold text-sm">
-              Ngày sinh <span className="text-gray-500 font-normal">(Không bắt buộc)</span>
-            </label>
-            <input
-              type="date"
-              id="dateOfBirth"
-              name="dateOfBirth"
-              value={formData.dateOfBirth}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`w-full px-4 py-3 border-2 rounded-lg text-sm transition-all duration-300 ${
-                errors.dateOfBirth && touched.dateOfBirth 
-                  ? 'border-red-600 focus:ring-red-100' 
-                  : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-100'
-              } focus:outline-none focus:ring-4`}
-              max={new Date().toISOString().split('T')[0]}
-            />
-            {errors.dateOfBirth && touched.dateOfBirth && (
-              <span className="block text-red-600 text-xs mt-1.5 font-medium">{errors.dateOfBirth}</span>
-            )}
-          </div>
+          <div className="relative z-10 text-center max-w-lg">
+            <div className="mb-8 relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-emerald-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+              <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Students" className="relative rounded-2xl shadow-2xl border-4 border-white/10 mx-auto w-3/4 object-cover h-64 transform transition duration-500 hover:scale-[1.02]" />
+            </div>
+            <h2 className="text-4xl font-extrabold text-white mb-4">
+              Tham Gia Cộng Đồng <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-emerald-400">EduPath</span>
+            </h2>
+            <p className="text-gray-300 text-lg leading-relaxed">
+              Kết nối với hàng ngàn học sinh, sinh viên và chuyên gia. Nhận lộ trình học tập được cá nhân hóa ngay hôm nay.
+            </p>
 
-          {/* Password */}
-          <div className="mb-6">
-            <label htmlFor="password" className="block mb-2 text-gray-700 font-semibold text-sm">
-              Mật khẩu <span className="text-red-600">*</span>
-            </label>
-            <div className="relative w-full">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={`w-full px-4 py-3 pr-12 border-2 rounded-lg text-sm transition-all duration-300 ${
-                  errors.password && touched.password 
-                    ? 'border-red-600 focus:ring-red-100' 
-                    : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-100'
-                } focus:outline-none focus:ring-4`}
-                placeholder="••••••••"
-              />
+            <div className="mt-8 flex justify-center gap-4">
+              <div className="flex -space-x-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="w-10 h-10 rounded-full border-2 border-gray-900 bg-gray-800 overflow-hidden">
+                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`} alt="user" />
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center text-sm font-semibold text-gray-400">
+                <span className="text-emerald-400 mr-1">+50k</span> thành viên
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Form (Swapped) */}
+        <div className="lg:w-1/2 flex items-center justify-center p-8 z-10 bg-white lg:order-last">
+          <div className="w-full max-w-md bg-white p-8 h-full overflow-y-auto max-h-screen">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <Link to="/" className="inline-flex justify-center mb-4 group">
+                <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-200 group-hover:scale-110 transition-transform">
+                  <span className="text-white font-bold text-2xl">E</span>
+                </div>
+              </Link>
+              <h2 className="text-3xl font-bold text-gray-900">Đăng Ký Tài Khoản</h2>
+              <p className="text-gray-500 mt-2">Bắt đầu hành trình định hướng miễn phí</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Full Name */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Họ và tên</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </span>
+                  <input
+                    type="text"
+                    name="fullname"
+                    value={formData.fullname}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="Nguyễn Văn A"
+                    className={`w-full pl-12 pr-4 py-3 rounded-lg border ${errors.fullname && touched.fullname ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all bg-gray-50 hover:bg-white`}
+                  />
+                </div>
+                {errors.fullname && touched.fullname && <p className="text-red-500 text-xs mt-1">{errors.fullname}</p>}
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Email</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </span>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="email@example.com"
+                    className={`w-full pl-12 pr-4 py-3 rounded-lg border ${errors.email && touched.email ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all bg-gray-50 hover:bg-white`}
+                  />
+                </div>
+                {errors.email && touched.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Mật khẩu</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </span>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="Tối thiểu 6 ký tự"
+                    className={`w-full pl-12 pr-12 py-3 rounded-lg border ${errors.password && touched.password ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all bg-gray-50 hover:bg-white`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showPassword ? '🙈' : '👁'}
+                  </button>
+                </div>
+                {errors.password && touched.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Xác nhận mật khẩu</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </span>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="Nhập lại mật khẩu"
+                    className={`w-full pl-12 pr-12 py-3 rounded-lg border ${errors.confirmPassword && touched.confirmPassword ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all bg-gray-50 hover:bg-white`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showConfirmPassword ? '🙈' : '👁'}
+                  </button>
+                </div>
+                {errors.confirmPassword && touched.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
+              </div>
+
+              {/* Date of Birth */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Ngày sinh</label>
+                <input
+                  type="date"
+                  name="dateOfBirth"
+                  value={formData.dateOfBirth}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  max={new Date().toISOString().split("T")[0]}
+                  className={`w-full px-4 py-3 rounded-lg border ${errors.dateOfBirth && touched.dateOfBirth ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all bg-gray-50 hover:bg-white`}
+                />
+                {errors.dateOfBirth && touched.dateOfBirth && <p className="text-red-500 text-xs mt-1">{errors.dateOfBirth}</p>}
+              </div>
+
+
+              {/* Terms Checkbox */}
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="terms"
+                    name="terms"
+                    type="checkbox"
+                    className="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300 rounded cursor-pointer"
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="terms" className="font-medium text-gray-700 cursor-pointer">
+                    Tôi đồng ý với <a href="#" className="text-red-600 hover:text-red-500 underline">Điều khoản dịch vụ</a> và <a href="#" className="text-red-600 hover:text-red-500 underline">Chính sách bảo mật</a>
+                  </label>
+                </div>
+              </div>
+
               <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-1 flex items-center justify-center text-gray-500 transition-colors duration-300 hover:text-indigo-500 focus:outline-none focus:text-indigo-500"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-red-600 text-white font-bold py-3.5 rounded-lg hover:bg-red-700 transition-all shadow-lg hover:shadow-red-200 disabled:opacity-50 disabled:cursor-not-allowed mt-6 transform hover:-translate-y-0.5"
               >
-                {showPassword ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                  </svg>
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Đang xử lý...
+                  </span>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
+                  "Đăng Ký Tài Khoản"
                 )}
               </button>
+            </form>
+
+            <div className="mt-8 text-center text-sm text-gray-600">
+              Đã có tài khoản?{" "}
+              <Link to="/login" className="font-bold text-red-600 hover:text-red-500 transition-colors">
+                Đăng nhập ngay
+              </Link>
             </div>
-            {errors.password && touched.password && (
-              <span className="block text-red-600 text-xs mt-1.5 font-medium">{errors.password}</span>
-            )}
-            <small className="block text-gray-500 text-xs mt-1.5">
-              Mật khẩu phải có ít nhất 6 ký tự
-            </small>
           </div>
-
-          {/* Confirm Password */}
-          <div className="mb-6">
-            <label htmlFor="confirmPassword" className="block mb-2 text-gray-700 font-semibold text-sm">
-              Xác nhận mật khẩu <span className="text-red-600">*</span>
-            </label>
-            <div className="relative w-full">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={`w-full px-4 py-3 pr-12 border-2 rounded-lg text-sm transition-all duration-300 ${
-                  errors.confirmPassword && touched.confirmPassword 
-                    ? 'border-red-600 focus:ring-red-100' 
-                    : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-100'
-                } focus:outline-none focus:ring-4`}
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-1 flex items-center justify-center text-gray-500 transition-colors duration-300 hover:text-indigo-500 focus:outline-none focus:text-indigo-500"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-              >
-                {showConfirmPassword ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                )}
-              </button>
-            </div>
-            {errors.confirmPassword && touched.confirmPassword && (
-              <span className="block text-red-600 text-xs mt-1.5 font-medium">{errors.confirmPassword}</span>
-            )}
-          </div>
-
-          <button 
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-base font-semibold cursor-pointer transition-all duration-300 mt-2 ${
-              isSubmitting
-                ? 'opacity-50 cursor-not-allowed'
-                : 'hover:transform hover:-translate-y-0.5 hover:shadow-xl active:transform-none'
-            }`}
-          >
-            {isSubmitting ? 'Đang xử lý...' : 'Đăng ký'}
-          </button>
-
-          <p className="text-center mt-6 text-gray-600 text-sm">
-            Đã có tài khoản? <Link to="/login" className="text-indigo-500 no-underline font-semibold transition-colors duration-300 hover:text-purple-600 hover:underline">Đăng nhập ngay</Link>
-          </p>
-        </form>
+        </div>
       </div>
 
-      {/* Toast notification */}
       {toast && (
-        <Toast 
+        <Toast
           message={toast.message}
           type={toast.type}
-          duration={toast.type === 'success' ? 2000 : 4000}
+          duration={toast.type === 'success' ? 2000 : 4000} // Reverted duration to original logic
           onClose={() => setToast(null)}
         />
       )}
-    </div>
+    </>
   );
 }
 
